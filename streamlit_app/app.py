@@ -83,7 +83,14 @@ class InferenceEngine:
         self.current_model_file = filename
 
     def predict(self, data: np.ndarray) -> tuple[int, str, float, float]:
-        """Return (class_index, label, confidence, latency_ms) for one sample."""
+        """Run single-sample inference and measure latency.
+
+        Returns:
+            class_index: Predicted class (0–3).
+            label:       Human-readable class name from LABEL_MAP.
+            confidence:  Probability of the predicted class.
+            latency_ms:  Wall-clock inference time in milliseconds.
+        """
         if self.model is None:
             raise RuntimeError("No model loaded. Select a model first.")
         t0 = time.perf_counter_ns()
