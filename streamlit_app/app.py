@@ -10,6 +10,7 @@ Run with:
 
 import time
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -25,7 +26,7 @@ MODELS_DIR = APP_DIR / "models"
 CATALOG_PATH = APP_DIR / "models_catalog.csv"
 SIMULATION_PATH = APP_DIR / "simulation_data.csv"
 
-LABEL_MAP: dict[int, str] = {0: "Normal", 1: "DoS", 2: "Probe", 3: "Malware"}
+LABEL_MAP: Dict[int, str] = {0: "Normal", 1: "DoS", 2: "Probe", 3: "Malware"}
 
 MAX_LOG_ROWS = 10  # visible rows in the log table
 
@@ -68,7 +69,7 @@ class InferenceEngine:
     """Wraps an XGBoost classifier for single-sample prediction with timing."""
 
     def __init__(self) -> None:
-        self.model: xgb.XGBClassifier | None = None
+        self.model: Optional[xgb.XGBClassifier] = None
         self.current_model_file: str = ""
 
     def load_model(self, filename: str) -> None:
@@ -82,7 +83,7 @@ class InferenceEngine:
         self.model.load_model(str(path))
         self.current_model_file = filename
 
-    def predict(self, data: np.ndarray) -> tuple[int, str, float, float]:
+    def predict(self, data: np.ndarray) -> Tuple[int, str, float, float]:
         """Run single-sample inference and measure latency.
 
         Returns:
@@ -106,13 +107,13 @@ class InferenceEngine:
 if "engine" not in st.session_state:
     st.session_state.engine = InferenceEngine()
 if "logs" not in st.session_state:
-    st.session_state.logs: list[dict] = []
+    st.session_state.logs = []
 if "idx" not in st.session_state:
-    st.session_state.idx: int = 0
+    st.session_state.idx = 0
 if "run" not in st.session_state:
-    st.session_state.run: bool = False
+    st.session_state.run = False
 if "fp_count" not in st.session_state:
-    st.session_state.fp_count: int = 0
+    st.session_state.fp_count = 0
 
 
 # ---------------------------------------------------------------------------
