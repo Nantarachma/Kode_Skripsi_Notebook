@@ -38,7 +38,7 @@ SCALER_PATH = APP_DIR / "scaler.pkl"
 
 LABEL_MAP_DEFAULT: Dict[int, str] = {0: "Normal", 1: "DoS", 2: "Probe", 3: "Malware"}
 
-MAX_LOG_ROWS = 50  # rows retained in the detection history
+MAX_LOG_ROWS = 150  # rows retained in the detection history
 LATENCY_THRESHOLD_MS = 70  # latency threshold for flagging rows (ms)
 
 # Event type display configuration for log table
@@ -397,6 +397,13 @@ else:
         """
     )
 
+sim_data_count = st.sidebar.selectbox(
+    "4. Jumlah Data Simulasi",
+    [50, 100, 150],
+    index=0,
+    help="Pilih jumlah data yang akan digunakan dalam simulasi (50, 100, atau 150).",
+)
+
 speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 1, 10, 2)
 
 auto_stop = st.sidebar.checkbox(
@@ -490,6 +497,9 @@ if is_baseline:
     stream = df[df["Label_True"] == 0].reset_index(drop=True)
 else:
     stream = df
+
+# Limit stream to the selected number of data rows
+stream = stream.head(sim_data_count).reset_index(drop=True)
 
 col_stat1, col_stat2, col_stat3 = st.columns(3)
 chart_spot = st.empty()
