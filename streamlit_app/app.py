@@ -330,6 +330,8 @@ if "stop_reason" not in st.session_state:
     st.session_state.stop_reason = None  # reason the simulation was auto-stopped
 if "step_once" not in st.session_state:
     st.session_state.step_once = False  # single-step mode flag
+if "simulation_finished" not in st.session_state:
+    st.session_state.simulation_finished = False  # flag for completed simulation
 
 
 # ---------------------------------------------------------------------------
@@ -438,6 +440,7 @@ if st.sidebar.button("🔄 RESET"):
     st.session_state.last_event_type = None
     st.session_state.stop_reason = None
     st.session_state.step_once = False
+    st.session_state.simulation_finished = False
 
 
 # ---------------------------------------------------------------------------
@@ -595,7 +598,10 @@ if _should_run:
 
 elif st.session_state.idx >= len(stream) and st.session_state.run:
     st.session_state.run = False
+    st.session_state.simulation_finished = True
     st.success("✅ Simulasi Selesai.")
+elif st.session_state.idx >= len(stream) and st.session_state.last_pred is not None:
+    st.session_state.simulation_finished = True
 
 # ---------------------------------------------------------------------------
 # Dashboard display (always visible)
@@ -775,6 +781,102 @@ if st.session_state.stop_reason:
     st.warning(st.session_state.stop_reason)
 elif not st.session_state.run and st.session_state.last_pred is not None:
     st.info("⏹️ Simulasi Dihentikan. Tekan ▶️ START untuk melanjutkan atau ⏭️ NEXT untuk maju satu paket.")
+
+# ---------------------------------------------------------------------------
+# Summary Charts (displayed after simulation finishes)
+# ---------------------------------------------------------------------------
+if st.session_state.simulation_finished and st.session_state.logs:
+    st.markdown("---")
+    st.subheader("📈 Grafik Hasil Simulasi")
+
+    chart_col1, chart_col2 = st.columns(2)
+
+    # -- 1. Pie chart: Detection distribution (TP / TN / FP / FN) --
+    with chart_col1:
+        det_labels = ["True Positive (TP)", "True Negative (TN)",
+                       "False Positive (FP)", "False Negative (FN)"]
+        det_values = [
+            st.session_state.tp_count,
+            st.session_state.tn_count,
+            st.session_state.fp_count,
+            st.session_state.fn_count,
+        ]
+        det_colors = ["#e74c3c", "#2ecc71", "#f39c12", "#8e44ad"]
+        fig_pie = go.Figure(
+            go.Pie(
+                labels=det_labels,
+                values=det_values,
+                marker=dict(colors=det_colors),
+                textinfo="label+value+percent",
+                hole=0.35,
+            )
+        )
+        fig_pie.update_layout(
+            title_text="Distribusi Deteksi (TP/TN/FP/FN)",
+            height=400,
+            margin=dict(t=60, b=20, l=20, r=20),
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+    # -- 2. Bar chart: Prediction label distribution --
+    with chart_col2:
+        pred_counts: Dict[str, int] = {}
+        for entry in st.session_state.logs:
+            lbl = entry.get("Prediksi", "Unknown")
+            pred_counts[lbl] = pred_counts.get(lbl, 0) + 1
+        bar_labels = list(pred_counts.keys())
+        bar_values = list(pred_counts.values())
+        fig_bar = go.Figure(
+            go.Bar(
+                x=bar_labels,
+                y=bar_values,
+                marker_color="#3b5998",
+                text=bar_values,
+                textposition="auto",
+            )
+        )
+        fig_bar.update_layout(
+            title_text="Distribusi Prediksi per Label",
+            xaxis_title="Label Prediksi",
+            yaxis_title="Jumlah",
+            height=400,
+            margin=dict(t=60, b=40, l=40, r=20),
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # -- 3. Line chart: Latency over time --
+    if st.session_state.latency_history:
+        fig_lat = go.Figure(
+            go.Scatter(
+                x=list(range(len(st.session_state.latency_history))),
+                y=st.session_state.latency_history,
+                mode="lines+markers",
+                line=dict(color="#2980b9", width=2),
+                marker=dict(size=4),
+                name="Latensi",
+            )
+        )
+        fig_lat.add_hline(
+            y=LATENCY_THRESHOLD_MS,
+            line_dash="dash",
+            line_color="red",
+            annotation_text=f"Threshold ({LATENCY_THRESHOLD_MS} ms)",
+        )
+        avg_latency = np.mean(st.session_state.latency_history)
+        fig_lat.add_hline(
+            y=avg_latency,
+            line_dash="dot",
+            line_color="green",
+            annotation_text=f"Rata-rata ({avg_latency:.4f} ms)",
+        )
+        fig_lat.update_layout(
+            title_text="Latensi Inferensi per Paket",
+            xaxis_title="Paket ke-",
+            yaxis_title="Latensi (ms)",
+            height=400,
+            margin=dict(t=60, b=40, l=40, r=20),
+        )
+        st.plotly_chart(fig_lat, use_container_width=True)
 
 # --- Trigger rerun for next step ---
 if st.session_state.run and st.session_state.idx < len(stream) and catalog_loaded:
