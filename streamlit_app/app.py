@@ -39,7 +39,7 @@ SCALER_PATH = APP_DIR / "scaler.pkl"
 LABEL_MAP_DEFAULT: Dict[int, str] = {0: "Normal", 1: "DoS", 2: "Probe", 3: "Malware"}
 
 MAX_LOG_ROWS = 50  # rows retained in the detection history
-LATENCY_THRESHOLD_MS = 50  # latency threshold for flagging rows (ms)
+LATENCY_THRESHOLD_MS = 70  # latency threshold for flagging rows (ms)
 
 # Event type display configuration for log table
 _EVENT_ICONS: Dict[str, str] = {"tp": "🚨", "tn": "✅", "fp": "⚠️", "fn": "🟣"}
@@ -637,7 +637,7 @@ if st.session_state.last_pred is not None:
                 "threshold": {
                     "line": {"color": "red", "width": 4},
                     "thickness": 0.75,
-                    "value": 50,
+                    "value": 70,
                 },
             },
         )
@@ -708,7 +708,7 @@ else:
                 "threshold": {
                     "line": {"color": "red", "width": 4},
                     "thickness": 0.75,
-                    "value": 50,
+                    "value": 70,
                 },
             },
         )
