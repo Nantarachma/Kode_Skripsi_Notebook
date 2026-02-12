@@ -68,11 +68,21 @@ def load_scaler():
 label_encoder = load_label_encoder()
 scaler = load_scaler()
 
-# Build LABEL_MAP dynamically from the label encoder when available
+# Build LABEL_MAP dynamically from the label encoder when available.
+# If the encoder classes are numeric (e.g. 0, 1, 2, 3), resolve them
+# through LABEL_MAP_DEFAULT so the UI always shows human-readable names
+# such as "Normal", "DoS", "Probe", "Malware".
 if label_encoder is not None:
-    LABEL_MAP: Dict[int, str] = {
+    _raw_map: Dict[int, str] = {
         i: str(cls) for i, cls in enumerate(label_encoder.classes_)
     }
+    _all_numeric = bool(_raw_map) and all(v.isdigit() for v in _raw_map.values())
+    if _all_numeric:
+        LABEL_MAP: Dict[int, str] = {
+            i: LABEL_MAP_DEFAULT.get(int(v), v) for i, v in _raw_map.items()
+        }
+    else:
+        LABEL_MAP = _raw_map
 else:
     LABEL_MAP = LABEL_MAP_DEFAULT
 
