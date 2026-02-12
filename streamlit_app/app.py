@@ -39,6 +39,7 @@ SCALER_PATH = APP_DIR / "scaler.pkl"
 LABEL_MAP_DEFAULT: Dict[int, str] = {0: "Normal", 1: "DoS", 2: "Probe", 3: "Malware"}
 
 MAX_LOG_ROWS = 50  # rows retained in the detection history
+LATENCY_THRESHOLD_MS = 50  # latency threshold for flagging rows (ms)
 
 
 # ---------------------------------------------------------------------------
@@ -432,7 +433,7 @@ if st.session_state.last_pred is not None:
         )
 
     # --- Latency gauge ---
-    bar_color = "#2ecc71" if lat < 50 else "#e74c3c"
+    bar_color = "#2ecc71" if lat < LATENCY_THRESHOLD_MS else "#e74c3c"
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
@@ -507,7 +508,7 @@ def _style_log_table(log_data: list) -> str:
     header = "".join(f"<th style='padding:6px 10px;border:1px solid #ddd;'>{c}</th>" for c in display_cols)
     rows_html = ""
     for entry in log_data:
-        is_bad = entry.get("_mismatch", False) or entry.get("_lat_val", 0) > 50
+        is_bad = entry.get("_mismatch", False) or entry.get("_lat_val", 0) > LATENCY_THRESHOLD_MS
         bg = "background-color:#f8d7da;" if is_bad else ""
         cells = "".join(
             f"<td style='padding:6px 10px;border:1px solid #ddd;{bg}'>{entry.get(c, '')}</td>"
