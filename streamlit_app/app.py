@@ -246,7 +246,7 @@ else:
         """
     )
 
-speed = st.sidebar.slider("Kecepatan Simulasi (ms)", 10, 1000, 200)
+speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 1, 10, 2)
 
 # 3. Start / Stop / Reset controls ------------------------------------------
 col_start, col_stop = st.sidebar.columns(2)
@@ -392,19 +392,19 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
         )
 
     # --- Latency gauge ---
-    bar_color = "#2ecc71" if lat < 0.1 else "#e74c3c"
+    bar_color = "#2ecc71" if lat < 50 else "#e74c3c"
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=lat,
             title={"text": "Latency Monitor (ms)"},
             gauge={
-                "axis": {"range": [0, 0.5]},
+                "axis": {"range": [0, 100]},
                 "bar": {"color": bar_color},
                 "threshold": {
                     "line": {"color": "red", "width": 4},
                     "thickness": 0.75,
-                    "value": 0.1,
+                    "value": 50,
                 },
             },
         )
@@ -416,7 +416,7 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
     log_spot.dataframe(pd.DataFrame(st.session_state.logs), use_container_width=True)
 
     st.session_state.idx += 1
-    time.sleep(speed / 1000)
+    time.sleep(speed)
     st.rerun()
 
 elif st.session_state.idx >= len(stream) and st.session_state.run:
