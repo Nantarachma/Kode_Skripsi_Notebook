@@ -103,6 +103,15 @@ st.markdown(
             padding: 10px; background-color: #e2e3e5;
             border-radius: 5px; font-size: 0.9em;
         }
+        .mismatch-card {
+            padding: 15px; border-radius: 10px; text-align: center;
+            border: 2px solid #dc3545; margin-bottom: 10px;
+            background-color: #f8d7da; color: #721c24;
+            animation: blink 1s infinite;
+        }
+        .mismatch-card .detail {
+            font-size: 0.85em; margin-top: 5px;
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -181,6 +190,8 @@ if "latency_history" not in st.session_state:
     st.session_state.latency_history = []
 if "last_pred" not in st.session_state:
     st.session_state.last_pred = None  # stores (pred_idx, pred_label, conf, lat)
+if "last_mismatch" not in st.session_state:
+    st.session_state.last_mismatch = None  # stores (true_label, pred_label) or None
 
 
 # ---------------------------------------------------------------------------
@@ -263,6 +274,7 @@ if st.sidebar.button("🔄 RESET"):
     st.session_state.fp_count = 0
     st.session_state.latency_history = []
     st.session_state.last_pred = None
+    st.session_state.last_mismatch = None
 
 
 # ---------------------------------------------------------------------------
@@ -352,6 +364,13 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
     # Store last prediction for persistent display
     st.session_state.last_pred = (pred_idx, pred_label, conf, lat)
 
+    # Track mismatch for enhanced visualization
+    is_mismatch = pred_idx != true_label_idx
+    if is_mismatch:
+        st.session_state.last_mismatch = (true_label, pred_label)
+    else:
+        st.session_state.last_mismatch = None
+
     # -- 5. Visualisasi & Pembaruan UI ---------------------------------------
     # Append to rolling log (most-recent first)
     st.session_state.logs.insert(
@@ -363,6 +382,8 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
             "Prediksi": pred_label,
             "Confidence": f"{conf:.1%}",
             "Latensi": f"{lat:.3f} ms",
+            "_lat_val": lat,
+            "_mismatch": is_mismatch,
         },
     )
     if len(st.session_state.logs) > MAX_LOG_ROWS:
@@ -428,8 +449,23 @@ if st.session_state.last_pred is not None:
             },
         )
     )
-    fig.update_layout(height=250, margin=dict(t=30, b=10, l=30, r=30))
+    fig.update_layout(height=300, margin=dict(t=80, b=10, l=30, r=30))
     chart_spot.plotly_chart(fig, use_container_width=True)
+
+    # --- Mismatch alert card (attack-type differentiation) ---
+    if st.session_state.last_mismatch is not None:
+        m_true, m_pred = st.session_state.last_mismatch
+        st.markdown(
+            f'<div class="mismatch-card">'
+            f"<h3>⚠️ Kesalahan Prediksi Terdeteksi!</h3>"
+            f'<div class="detail">'
+            f"<b>Label Asli:</b> {m_true} &nbsp;→&nbsp; "
+            f"<b>Prediksi Model:</b> {m_pred}</div>"
+            f'<div class="detail">Model salah mengklasifikasikan '
+            f"<b>{m_true}</b> sebagai <b>{m_pred}</b></div>"
+            f"</div>",
+            unsafe_allow_html=True,
+        )
 else:
     # Default state before simulation starts
     col_stat1.markdown(
@@ -459,12 +495,35 @@ else:
             },
         )
     )
-    fig.update_layout(height=250, margin=dict(t=30, b=10, l=30, r=30))
+    fig.update_layout(height=300, margin=dict(t=80, b=10, l=30, r=30))
     chart_spot.plotly_chart(fig, use_container_width=True)
+
+
+def _style_log_table(log_data: list) -> str:
+    """Build an HTML table with red background for mismatch or high-latency rows."""
+    if not log_data:
+        return ""
+    display_cols = ["ID", "Waktu", "Label Asli", "Prediksi", "Confidence", "Latensi"]
+    header = "".join(f"<th style='padding:6px 10px;border:1px solid #ddd;'>{c}</th>" for c in display_cols)
+    rows_html = ""
+    for entry in log_data:
+        is_bad = entry.get("_mismatch", False) or entry.get("_lat_val", 0) > 50
+        bg = "background-color:#f8d7da;" if is_bad else ""
+        cells = "".join(
+            f"<td style='padding:6px 10px;border:1px solid #ddd;{bg}'>{entry.get(c, '')}</td>"
+            for c in display_cols
+        )
+        rows_html += f"<tr style='{bg}'>{cells}</tr>"
+    return (
+        "<table style='width:100%;border-collapse:collapse;'>"
+        f"<thead><tr style='background-color:#f0f0f0;'>{header}</tr></thead>"
+        f"<tbody>{rows_html}</tbody></table>"
+    )
+
 
 # --- Log table (always visible) ---
 if st.session_state.logs:
-    log_spot.dataframe(pd.DataFrame(st.session_state.logs), use_container_width=True)
+    log_spot.markdown(_style_log_table(st.session_state.logs), unsafe_allow_html=True)
 else:
     log_spot.info("📋 Log deteksi akan muncul di sini saat simulasi berjalan.")
 
