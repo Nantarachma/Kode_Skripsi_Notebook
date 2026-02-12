@@ -176,6 +176,7 @@ st.markdown(
         .log-table td {
             padding: 8px 12px;
             border-bottom: 1px solid #e8e8e8;
+            color: #000000;
         }
         .log-table tbody tr {
             background-color: #ffffff;
