@@ -179,6 +179,8 @@ if "fp_count" not in st.session_state:
     st.session_state.fp_count = 0
 if "latency_history" not in st.session_state:
     st.session_state.latency_history = []
+if "last_pred" not in st.session_state:
+    st.session_state.last_pred = None  # stores (pred_idx, pred_label, conf, lat)
 
 
 # ---------------------------------------------------------------------------
@@ -246,7 +248,7 @@ else:
         """
     )
 
-speed = st.sidebar.slider("Kecepatan Simulasi (ms)", 10, 1000, 200)
+speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 1, 10, 2)
 
 # 3. Start / Stop / Reset controls ------------------------------------------
 col_start, col_stop = st.sidebar.columns(2)
@@ -255,10 +257,12 @@ if col_start.button("▶️ START"):
 if col_stop.button("⏹️ STOP"):
     st.session_state.run = False
 if st.sidebar.button("🔄 RESET"):
+    st.session_state.run = False
     st.session_state.logs = []
     st.session_state.idx = 0
     st.session_state.fp_count = 0
     st.session_state.latency_history = []
+    st.session_state.last_pred = None
 
 
 # ---------------------------------------------------------------------------
@@ -345,6 +349,9 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
     if is_baseline and pred_idx > 0:
         st.session_state.fp_count += 1
 
+    # Store last prediction for persistent display
+    st.session_state.last_pred = (pred_idx, pred_label, conf, lat)
+
     # -- 5. Visualisasi & Pembaruan UI ---------------------------------------
     # Append to rolling log (most-recent first)
     st.session_state.logs.insert(
@@ -360,6 +367,18 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
     )
     if len(st.session_state.logs) > MAX_LOG_ROWS:
         st.session_state.logs.pop()
+
+    st.session_state.idx += 1
+
+elif st.session_state.idx >= len(stream) and st.session_state.run:
+    st.session_state.run = False
+    st.success("✅ Simulasi Selesai.")
+
+# ---------------------------------------------------------------------------
+# Dashboard display (always visible)
+# ---------------------------------------------------------------------------
+if st.session_state.last_pred is not None:
+    pred_idx, pred_label, conf, lat = st.session_state.last_pred
 
     # --- Status card ---
     status_cls = "normal" if pred_idx == 0 else "attack"
@@ -388,23 +407,54 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
         )
     else:
         col_stat3.metric(
-            "Packet Processed", f"{st.session_state.idx + 1}", delta="Live"
+            "Packet Processed", f"{st.session_state.idx}", delta="Live"
         )
 
     # --- Latency gauge ---
-    bar_color = "#2ecc71" if lat < 0.1 else "#e74c3c"
+    bar_color = "#2ecc71" if lat < 50 else "#e74c3c"
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=lat,
             title={"text": "Latency Monitor (ms)"},
             gauge={
-                "axis": {"range": [0, 0.5]},
+                "axis": {"range": [0, 100]},
                 "bar": {"color": bar_color},
                 "threshold": {
                     "line": {"color": "red", "width": 4},
                     "thickness": 0.75,
-                    "value": 0.1,
+                    "value": 50,
+                },
+            },
+        )
+    )
+    fig.update_layout(height=250, margin=dict(t=30, b=10, l=30, r=30))
+    chart_spot.plotly_chart(fig, use_container_width=True)
+else:
+    # Default state before simulation starts
+    col_stat1.markdown(
+        '<div class="metric-card normal"><h2>⏸️ Menunggu Simulasi</h2></div>',
+        unsafe_allow_html=True,
+    )
+    col_stat2.metric("Inference Latency", "— ms", delta="avg — ms", delta_color="off")
+    if is_baseline:
+        col_stat3.metric("False Positives", "0", delta="Harus 0", delta_color="inverse")
+    else:
+        col_stat3.metric("Packet Processed", "0", delta="Idle")
+
+    # --- Empty latency gauge ---
+    fig = go.Figure(
+        go.Indicator(
+            mode="gauge+number",
+            value=0,
+            title={"text": "Latency Monitor (ms)"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "#2ecc71"},
+                "threshold": {
+                    "line": {"color": "red", "width": 4},
+                    "thickness": 0.75,
+                    "value": 50,
                 },
             },
         )
@@ -412,13 +462,17 @@ if st.session_state.run and st.session_state.idx < len(stream) and catalog_loade
     fig.update_layout(height=250, margin=dict(t=30, b=10, l=30, r=30))
     chart_spot.plotly_chart(fig, use_container_width=True)
 
-    # --- Log table ---
+# --- Log table (always visible) ---
+if st.session_state.logs:
     log_spot.dataframe(pd.DataFrame(st.session_state.logs), use_container_width=True)
+else:
+    log_spot.info("📋 Log deteksi akan muncul di sini saat simulasi berjalan.")
 
-    st.session_state.idx += 1
-    time.sleep(speed / 1000)
+# --- Status message ---
+if not st.session_state.run and st.session_state.last_pred is not None:
+    st.info("⏹️ Simulasi Dihentikan. Tekan ▶️ START untuk melanjutkan.")
+
+# --- Trigger rerun for next step ---
+if st.session_state.run and st.session_state.idx < len(stream) and catalog_loaded:
+    time.sleep(speed)
     st.rerun()
-
-elif st.session_state.idx >= len(stream) and st.session_state.run:
-    st.session_state.run = False
-    st.success("✅ Simulasi Selesai.")
