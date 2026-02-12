@@ -87,31 +87,83 @@ st.markdown(
     """
     <style>
         .metric-card {
-            padding: 15px; border-radius: 10px; text-align: center;
-            border: 1px solid #ddd; margin-bottom: 10px;
+            padding: 18px 15px; border-radius: 12px; text-align: center;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            transition: box-shadow 0.2s ease;
         }
+        .metric-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .metric-card h2 { margin: 0; }
         .normal {
-            background-color: #d4edda; color: #155724;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            color: #155724;
             border-left: 5px solid #28a745;
         }
         .attack {
-            background-color: #f8d7da; color: #721c24;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
             border-left: 5px solid #dc3545;
-            animation: blink 1s infinite;
+            animation: pulse 1.5s ease-in-out infinite;
         }
-        @keyframes blink { 50% { opacity: 0.8; } }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.75; }
+        }
         .scenario-box {
             padding: 10px; background-color: #e2e3e5;
             border-radius: 5px; font-size: 0.9em;
         }
         .mismatch-card {
-            padding: 15px; border-radius: 10px; text-align: center;
+            padding: 18px; border-radius: 12px; text-align: center;
             border: 2px solid #dc3545; margin-bottom: 10px;
-            background-color: #f8d7da; color: #721c24;
-            animation: blink 1s infinite;
+            background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+            color: #721c24;
+            animation: pulse 1.5s ease-in-out infinite;
+            box-shadow: 0 2px 8px rgba(220,53,69,0.18);
         }
         .mismatch-card .detail {
             font-size: 0.85em; margin-top: 5px;
+        }
+
+        /* History log table */
+        .log-table {
+            width: 100%; border-collapse: separate;
+            border-spacing: 0; border-radius: 10px;
+            overflow: hidden; font-size: 0.92em;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .log-table thead tr {
+            background: linear-gradient(90deg, #4a6fa5 0%, #3b5998 100%);
+            color: #ffffff;
+        }
+        .log-table th {
+            padding: 10px 12px; text-align: left;
+            font-weight: 600; letter-spacing: 0.02em;
+            border: none;
+        }
+        .log-table td {
+            padding: 8px 12px;
+            border-bottom: 1px solid #e8e8e8;
+        }
+        .log-table tbody tr {
+            background-color: #ffffff;
+            transition: background-color 0.15s ease;
+        }
+        .log-table tbody tr:nth-child(even) {
+            background-color: #f7f9fc;
+        }
+        .log-table tbody tr:hover {
+            background-color: #edf2f7;
+        }
+        .log-table tbody tr.row-bad {
+            background-color: #fff0f0 !important;
+        }
+        .log-table tbody tr.row-bad td {
+            color: #8b1a1a;
+            border-bottom-color: #f5c6cb;
+        }
+        .log-table tbody tr.row-bad:hover {
+            background-color: #ffe0e0 !important;
         }
     </style>
     """,
@@ -501,23 +553,20 @@ else:
 
 
 def _style_log_table(log_data: list) -> str:
-    """Build an HTML table with red background for mismatch or high-latency rows."""
+    """Build an HTML table with class-based styling for mismatch or high-latency rows."""
     if not log_data:
         return ""
     display_cols = ["ID", "Waktu", "Label Asli", "Prediksi", "Confidence", "Latensi"]
-    header = "".join(f"<th style='padding:6px 10px;border:1px solid #ddd;'>{c}</th>" for c in display_cols)
+    header = "".join(f"<th>{c}</th>" for c in display_cols)
     rows_html = ""
     for entry in log_data:
         is_bad = entry.get("_mismatch", False) or entry.get("_lat_val", 0) > LATENCY_THRESHOLD_MS
-        bg = "background-color:#f8d7da;" if is_bad else ""
-        cells = "".join(
-            f"<td style='padding:6px 10px;border:1px solid #ddd;{bg}'>{entry.get(c, '')}</td>"
-            for c in display_cols
-        )
-        rows_html += f"<tr style='{bg}'>{cells}</tr>"
+        row_cls = ' class="row-bad"' if is_bad else ""
+        cells = "".join(f"<td>{entry.get(c, '')}</td>" for c in display_cols)
+        rows_html += f"<tr{row_cls}>{cells}</tr>"
     return (
-        "<table style='width:100%;border-collapse:collapse;'>"
-        f"<thead><tr style='background-color:#f0f0f0;'>{header}</tr></thead>"
+        '<table class="log-table">'
+        f"<thead><tr>{header}</tr></thead>"
         f"<tbody>{rows_html}</tbody></table>"
     )
 
