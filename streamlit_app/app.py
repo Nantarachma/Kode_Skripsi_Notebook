@@ -79,44 +79,111 @@ else:
     EXPECTED_FEATURES = []
 
 # ---------------------------------------------------------------------------
-# Page config & CSS
+# Page config & Theme
 # ---------------------------------------------------------------------------
 st.set_page_config(page_title="NIDS Real-Time Dashboard", page_icon="🛡️", layout="wide")
 
-st.markdown(
-    """
-    <style>
-        .metric-card {
-            padding: 15px; border-radius: 10px; text-align: center;
-            border: 1px solid #ddd; margin-bottom: 10px;
-        }
-        .normal {
-            background-color: #d4edda; color: #155724;
-            border-left: 5px solid #28a745;
-        }
-        .attack {
-            background-color: #f8d7da; color: #721c24;
-            border-left: 5px solid #dc3545;
-            animation: blink 1s infinite;
-        }
-        @keyframes blink { 50% { opacity: 0.8; } }
-        .scenario-box {
-            padding: 10px; background-color: #e2e3e5;
-            border-radius: 5px; font-size: 0.9em;
-        }
-        .mismatch-card {
-            padding: 15px; border-radius: 10px; text-align: center;
-            border: 2px solid #dc3545; margin-bottom: 10px;
-            background-color: #f8d7da; color: #721c24;
-            animation: blink 1s infinite;
-        }
-        .mismatch-card .detail {
-            font-size: 0.85em; margin-top: 5px;
-        }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
+# Theme colour palettes
+THEME_COLORS = {
+    "Light ☀️": {
+        "card_border": "#ddd",
+        "normal_bg": "#d4edda",
+        "normal_fg": "#155724",
+        "normal_border": "#28a745",
+        "attack_bg": "#f8d7da",
+        "attack_fg": "#721c24",
+        "attack_border": "#dc3545",
+        "mismatch_bg": "#f8d7da",
+        "mismatch_fg": "#721c24",
+        "mismatch_border": "#dc3545",
+        "scenario_bg": "#e2e3e5",
+        "table_header_bg": "#f0f0f0",
+        "table_border": "#ddd",
+        "table_text": "#212529",
+        "bad_row_bg": "#f8d7da",
+        "gauge_bg": "#ffffff",
+        "gauge_font": "#212529",
+        "page_bg": "#ffffff",
+        "page_fg": "#212529",
+        "plotly_template": "plotly_white",
+    },
+    "Dark 🌙": {
+        "card_border": "#444",
+        "normal_bg": "#1b3a26",
+        "normal_fg": "#74d89e",
+        "normal_border": "#28a745",
+        "attack_bg": "#3b1a1f",
+        "attack_fg": "#f5a0a8",
+        "attack_border": "#dc3545",
+        "mismatch_bg": "#3b1a1f",
+        "mismatch_fg": "#f5a0a8",
+        "mismatch_border": "#dc3545",
+        "scenario_bg": "#2c2f33",
+        "table_header_bg": "#2c2f33",
+        "table_border": "#444",
+        "table_text": "#e0e0e0",
+        "bad_row_bg": "#3b1a1f",
+        "gauge_bg": "#0e1117",
+        "gauge_font": "#e0e0e0",
+        "page_bg": "#0e1117",
+        "page_fg": "#e0e0e0",
+        "plotly_template": "plotly_dark",
+    },
+}
+
+# Initialise theme in session state
+if "theme" not in st.session_state:
+    st.session_state.theme = "Light ☀️"
+
+
+def _get_theme() -> dict:
+    """Return the active colour palette."""
+    return THEME_COLORS[st.session_state.theme]
+
+
+# ---------------------------------------------------------------------------
+# CSS (theme-aware)
+# ---------------------------------------------------------------------------
+def _inject_css() -> None:
+    """Inject CSS that adapts to the selected theme."""
+    t = _get_theme()
+    st.markdown(
+        f"""
+        <style>
+            .metric-card {{
+                padding: 15px; border-radius: 10px; text-align: center;
+                border: 1px solid {t["card_border"]}; margin-bottom: 10px;
+            }}
+            .normal {{
+                background-color: {t["normal_bg"]}; color: {t["normal_fg"]};
+                border-left: 5px solid {t["normal_border"]};
+            }}
+            .attack {{
+                background-color: {t["attack_bg"]}; color: {t["attack_fg"]};
+                border-left: 5px solid {t["attack_border"]};
+                animation: blink 1s infinite;
+            }}
+            @keyframes blink {{ 50% {{ opacity: 0.8; }} }}
+            .scenario-box {{
+                padding: 10px; background-color: {t["scenario_bg"]};
+                border-radius: 5px; font-size: 0.9em;
+            }}
+            .mismatch-card {{
+                padding: 15px; border-radius: 10px; text-align: center;
+                border: 2px solid {t["mismatch_border"]}; margin-bottom: 10px;
+                background-color: {t["mismatch_bg"]}; color: {t["mismatch_fg"]};
+                animation: blink 1s infinite;
+            }}
+            .mismatch-card .detail {{
+                font-size: 0.85em; margin-top: 5px;
+            }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+_inject_css()
 
 
 # ---------------------------------------------------------------------------
@@ -199,6 +266,15 @@ if "last_mismatch" not in st.session_state:
 # Sidebar – Control Panel
 # ---------------------------------------------------------------------------
 st.sidebar.title("🎛️ Control Panel")
+
+# Theme toggle ---------------------------------------------------------------
+st.session_state.theme = st.sidebar.selectbox(
+    "🎨 Tema Tampilan",
+    list(THEME_COLORS.keys()),
+    index=list(THEME_COLORS.keys()).index(st.session_state.theme),
+)
+
+st.sidebar.markdown("---")
 
 # 1. Model selector ----------------------------------------------------------
 catalog_loaded = False
@@ -433,14 +509,16 @@ if st.session_state.last_pred is not None:
         )
 
     # --- Latency gauge ---
+    t = _get_theme()
     bar_color = "#2ecc71" if lat < LATENCY_THRESHOLD_MS else "#e74c3c"
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=lat,
-            title={"text": "Latency Monitor (ms)"},
+            title={"text": "Latency Monitor (ms)", "font": {"color": t["gauge_font"]}},
+            number={"font": {"color": t["gauge_font"]}},
             gauge={
-                "axis": {"range": [0, 100]},
+                "axis": {"range": [0, 100], "tickfont": {"color": t["gauge_font"]}},
                 "bar": {"color": bar_color},
                 "threshold": {
                     "line": {"color": "red", "width": 4},
@@ -450,7 +528,12 @@ if st.session_state.last_pred is not None:
             },
         )
     )
-    fig.update_layout(height=300, margin=dict(t=80, b=10, l=30, r=30))
+    fig.update_layout(
+        height=300,
+        margin=dict(t=80, b=10, l=30, r=30),
+        paper_bgcolor=t["gauge_bg"],
+        font_color=t["gauge_font"],
+    )
     chart_spot.plotly_chart(fig, use_container_width=True)
 
     # --- Mismatch alert card (attack-type differentiation) ---
@@ -480,13 +563,15 @@ else:
         col_stat3.metric("Packet Processed", "0", delta="Idle")
 
     # --- Empty latency gauge ---
+    t = _get_theme()
     fig = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=0,
-            title={"text": "Latency Monitor (ms)"},
+            title={"text": "Latency Monitor (ms)", "font": {"color": t["gauge_font"]}},
+            number={"font": {"color": t["gauge_font"]}},
             gauge={
-                "axis": {"range": [0, 100]},
+                "axis": {"range": [0, 100], "tickfont": {"color": t["gauge_font"]}},
                 "bar": {"color": "#2ecc71"},
                 "threshold": {
                     "line": {"color": "red", "width": 4},
@@ -496,7 +581,12 @@ else:
             },
         )
     )
-    fig.update_layout(height=300, margin=dict(t=80, b=10, l=30, r=30))
+    fig.update_layout(
+        height=300,
+        margin=dict(t=80, b=10, l=30, r=30),
+        paper_bgcolor=t["gauge_bg"],
+        font_color=t["gauge_font"],
+    )
     chart_spot.plotly_chart(fig, use_container_width=True)
 
 
@@ -504,20 +594,25 @@ def _style_log_table(log_data: list) -> str:
     """Build an HTML table with red background for mismatch or high-latency rows."""
     if not log_data:
         return ""
+    t = _get_theme()
     display_cols = ["ID", "Waktu", "Label Asli", "Prediksi", "Confidence", "Latensi"]
-    header = "".join(f"<th style='padding:6px 10px;border:1px solid #ddd;'>{c}</th>" for c in display_cols)
+    header = "".join(
+        f"<th style='padding:6px 10px;border:1px solid {t['table_border']};color:{t['table_text']};'>{c}</th>"
+        for c in display_cols
+    )
     rows_html = ""
     for entry in log_data:
         is_bad = entry.get("_mismatch", False) or entry.get("_lat_val", 0) > LATENCY_THRESHOLD_MS
-        bg = "background-color:#f8d7da;" if is_bad else ""
+        bg = f"background-color:{t['bad_row_bg']};" if is_bad else ""
         cells = "".join(
-            f"<td style='padding:6px 10px;border:1px solid #ddd;{bg}'>{entry.get(c, '')}</td>"
+            f"<td style='padding:6px 10px;border:1px solid {t['table_border']};color:{t['table_text']};{bg}'>"
+            f"{entry.get(c, '')}</td>"
             for c in display_cols
         )
         rows_html += f"<tr style='{bg}'>{cells}</tr>"
     return (
         "<table style='width:100%;border-collapse:collapse;'>"
-        f"<thead><tr style='background-color:#f0f0f0;'>{header}</tr></thead>"
+        f"<thead><tr style='background-color:{t['table_header_bg']};'>{header}</tr></thead>"
         f"<tbody>{rows_html}</tbody></table>"
     )
 
