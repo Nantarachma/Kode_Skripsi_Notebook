@@ -609,10 +609,14 @@ if _should_run:
         st.session_state.run = False
         st.session_state.step_once = False
 
+    # -- Auto-finish: all simulation data has been processed -----------------
+    if st.session_state.idx >= len(stream):
+        st.session_state.run = False
+        st.session_state.simulation_finished = True
+
 elif st.session_state.idx >= len(stream) and st.session_state.run:
     st.session_state.run = False
     st.session_state.simulation_finished = True
-    st.success("✅ Simulasi Selesai.")
 elif st.session_state.idx >= len(stream) and st.session_state.last_pred is not None:
     st.session_state.simulation_finished = True
 
@@ -792,6 +796,8 @@ else:
 # --- Status message ---
 if st.session_state.stop_reason:
     st.warning(st.session_state.stop_reason)
+elif st.session_state.simulation_finished:
+    st.success("✅ Simulasi Selesai.")
 elif not st.session_state.run and st.session_state.last_pred is not None:
     st.info("⏹️ Simulasi Dihentikan. Tekan ▶️ START untuk melanjutkan atau ⏭️ NEXT untuk maju satu paket.")
 
