@@ -332,6 +332,8 @@ if "step_once" not in st.session_state:
     st.session_state.step_once = False  # single-step mode flag
 if "simulation_finished" not in st.session_state:
     st.session_state.simulation_finished = False  # flag for completed simulation
+if "random_seed" not in st.session_state:
+    st.session_state.random_seed = int(time.time() * 1000) % (2**32)  # random seed for data shuffling
 
 
 # ---------------------------------------------------------------------------
@@ -406,6 +408,12 @@ sim_data_count = st.sidebar.selectbox(
     help="Pilih jumlah data yang akan digunakan dalam simulasi (50, 100, atau 150).",
 )
 
+randomize_data = st.sidebar.checkbox(
+    "🔀 Acak Data (Randomize)",
+    value=False,
+    help="Acak urutan data simulasi agar setiap kali simulasi dijalankan hasilnya berbeda.",
+)
+
 speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 1, 10, 2)
 
 auto_stop = st.sidebar.checkbox(
@@ -441,6 +449,7 @@ if st.sidebar.button("🔄 RESET"):
     st.session_state.stop_reason = None
     st.session_state.step_once = False
     st.session_state.simulation_finished = False
+    st.session_state.random_seed = int(time.time() * 1000) % (2**32)
 
 
 # ---------------------------------------------------------------------------
@@ -500,6 +509,10 @@ if is_baseline:
     stream = df[df["Label_True"] == 0].reset_index(drop=True)
 else:
     stream = df
+
+# Randomize data order if enabled
+if randomize_data:
+    stream = stream.sample(frac=1, random_state=st.session_state.random_seed)
 
 # Limit stream to the selected number of data rows
 stream = stream.head(sim_data_count).reset_index(drop=True)
