@@ -414,7 +414,7 @@ randomize_data = st.sidebar.checkbox(
     help="Acak urutan data simulasi agar setiap kali simulasi dijalankan hasilnya berbeda.",
 )
 
-speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 1, 10, 2)
+speed = st.sidebar.slider("Kecepatan Simulasi (detik)", 0.5, 5.0, 2.0, step=0.5)
 
 auto_stop = st.sidebar.checkbox(
     "🛑 Auto-stop saat serangan terdeteksi",
