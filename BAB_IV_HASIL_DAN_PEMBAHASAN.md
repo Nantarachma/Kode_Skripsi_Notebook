@@ -47,6 +47,8 @@ Dataset yang digunakan adalah **NF-UNSW-NB15-v3** yang bersumber dari Kaggle. Da
 | Total Kolom (awal) | 54 |
 | Waktu Muat | 10,92 detik |
 
+Tabel 4.2 menyajikan ringkasan umum dataset NF-UNSW-NB15-v3 yang digunakan sebagai basis eksperimen. Dataset ini memiliki skala besar dengan 2.365.424 baris dan 54 kolom awal, yang mencakup fitur-fitur aliran jaringan berbasis NetFlow seperti durasi, ukuran paket, flag TCP, dan atribut protokol. Waktu pemuatan yang relatif singkat (10,92 detik) dimungkinkan oleh format CSV yang efisien dan kapasitas RAM yang memadai (31,35 GB).
+
 Dataset asli memiliki 10 kategori serangan pada kolom `Attack`. Untuk menyederhanakan kompleksitas klasifikasi, dilakukan pemetaan ulang (*mapping*) menjadi **4 kelas** multi-class sesuai dengan taksonomi serangan jaringan. Distribusi kelas setelah mapping disajikan pada Tabel 4.3.
 
 > **[TABEL 4.3 — Distribusi Kelas Setelah Mapping (4 Kelas)]**
@@ -60,6 +62,8 @@ Dataset asli memiliki 10 kategori serangan pada kolom `Attack`. Untuk menyederha
 
 > **[GAMBAR 4.1 — Diagram Batang/Pie Distribusi Kelas Dataset]**
 > *Deskripsi: Visualisasi proporsi keempat kelas (Normal, DoS, Probe, Malware) yang menunjukkan ketidakseimbangan ekstrem. File referensi: `distribusi_dan_bobot_skripsi.png`.*
+
+Gambar 4.1 memvisualisasikan distribusi keempat kelas hasil mapping secara grafis. Diagram ini menunjukkan secara jelas dominasi kelas Normal yang menempati lebih dari 94% dari keseluruhan dataset, sementara ketiga kelas serangan (DoS, Probe, Malware) secara kumulatif hanya mencakup kurang dari 6%. Visualisasi ini memperjelas skala ketidakseimbangan yang harus ditangani dalam proses pelatihan model.
 
 Tabel 4.3 menunjukkan ketidakseimbangan kelas (*class imbalance*) yang sangat ekstrem dengan **rasio imbalance 122,28 : 1** antara kelas mayoritas (Normal = 2.237.731 sampel) dan kelas minoritas (Probe = 18.300 sampel). Kondisi ini menjadi tantangan utama yang harus diatasi melalui strategi pembobotan kelas pada tahap pelatihan model.
 
@@ -81,6 +85,8 @@ Tahap pertama pra-pemrosesan adalah penghapusan kolom yang tidak relevan atau be
 | 4 | `IPV4_DST_ADDR` | Identitas IP, risiko overfitting terhadap alamat spesifik |
 | 5 | `Label` | Label biner redundan (sudah digantikan oleh kolom `Attack` yang di-mapping) |
 
+Tabel 4.4 merinci kelima kolom yang dieliminasi beserta justifikasi penghapusannya. Kolom `FLOW_START_MILLISECONDS` dan `FLOW_END_MILLISECONDS` dihapus karena merupakan metadata temporal yang tidak merepresentasikan karakteristik intrinsik aliran jaringan. Kolom `IPV4_SRC_ADDR` dan `IPV4_DST_ADDR` dihapus untuk mencegah model menghafal alamat IP spesifik (*overfitting*) yang tidak dapat digeneralisasi ke lingkungan jaringan lain. Kolom `Label` dihapus karena bersifat redundan — informasi klasifikasi sudah tercakup dalam kolom `Attack` yang telah dipetakan ke 4 kelas.
+
 Setelah penghapusan kolom, dilakukan pembersihan nilai hilang (*missing values*) dan nilai tak hingga (*infinity*):
 
 > **[TABEL 4.5 — Hasil Pembersihan Data Hilang dan Infinity]**
@@ -95,6 +101,8 @@ Setelah penghapusan kolom, dilakukan pembersihan nilai hilang (*missing values*)
 | Infinity setelah cleaning | 0 |
 | Metode imputasi | Median (dari data training) |
 | Status | ✅ Data 100% bersih dari Infinity dan NaN |
+
+Tabel 4.5 merangkum hasil proses pembersihan data. Dari 54 kolom awal, tersisa 50 kolom setelah penghapusan (49 fitur prediktor dan 1 kolom target). Terdapat 195.882 nilai NaN (*Not a Number*) yang terdeteksi, yang kemudian diimputasi menggunakan nilai **median** dari data training. Pemilihan median sebagai metode imputasi dilakukan karena sifatnya yang robust terhadap *outlier*, yang umum ditemukan pada data lalu lintas jaringan. Nilai tak hingga (*infinity*) yang dihasilkan dari operasi pembagian dengan nol pada beberapa fitur juga berhasil dibersihkan seluruhnya, menghasilkan dataset yang 100% bersih.
 
 Seluruh 49 fitur yang tersisa bersifat numerik sehingga tidak diperlukan proses encoding kategorikal. Verifikasi pada output notebook mengkonfirmasi: `✅ Tidak ada fitur kategorikal (semua numerik)`.
 
@@ -130,6 +138,8 @@ Daftar **49 fitur** yang digunakan dalam pemodelan:
 | 24 | RETRANSMITTED_IN_PKTS | 49 | DST_TO_SRC_IAT_STDDEV |
 | 25 | RETRANSMITTED_OUT_BYTES | | |
 
+Tabel 4.6 menyajikan daftar lengkap 49 fitur yang digunakan dalam pemodelan. Fitur-fitur ini mencakup beberapa kategori informasi aliran jaringan: (1) informasi port dan protokol (`L4_SRC_PORT`, `L4_DST_PORT`, `PROTOCOL`, `L7_PROTO`), (2) volume lalu lintas (`IN_BYTES`, `OUT_BYTES`, `IN_PKTS`, `OUT_PKTS`), (3) flag dan kontrol TCP (`TCP_FLAGS`, `CLIENT_TCP_FLAGS`, `SERVER_TCP_FLAGS`), (4) karakteristik temporal (`FLOW_DURATION_MILLISECONDS`, `DURATION_IN`, `DURATION_OUT`), (5) properti paket IP (`MIN_TTL`, `MAX_TTL`, panjang paket), (6) statistik throughput dan retransmisi, (7) distribusi ukuran paket (`NUM_PKTS_UP_TO_128_BYTES` hingga `NUM_PKTS_1024_TO_1514_BYTES`), (8) informasi protokol aplikasi (DNS, FTP, ICMP), dan (9) statistik *Inter-Arrival Time* (IAT) baik untuk arah sumber-ke-tujuan maupun sebaliknya. Keragaman fitur ini memungkinkan model untuk menangkap berbagai pola serangan jaringan dari berbagai sudut pandang.
+
 
 ---
 
@@ -148,6 +158,8 @@ Pembagian dataset dilakukan secara stratifikasi (*stratified split*) untuk mempe
 | Test (Holdout) | 473.085 | 20% dari total | Tidak tersentuh hingga evaluasi akhir |
 | **Total** | **2.365.424** | **100%** | |
 
+Tabel 4.7 menunjukkan strategi pembagian dataset dua tahap. Pada tahap pertama, dataset dibagi 80:20 menjadi subset latih-validasi (1.892.339 sampel) dan subset uji (473.085 sampel). Pada tahap kedua, subset latih-validasi dibagi kembali 80:20 menjadi data training final (1.513.871 sampel) dan data validasi (378.468 sampel). Subset uji (*holdout*) tidak digunakan sama sekali selama proses optimasi dan pelatihan, sehingga evaluasi akhir pada data test benar-benar mengukur kemampuan generalisasi model terhadap data yang belum pernah dilihat.
+
 Verifikasi proporsi kelas pada data uji menunjukkan distribusi yang konsisten:
 - Kelas 0 (Normal): 94,60%
 - Kelas 1 (DoS): 1,08%
@@ -165,6 +177,8 @@ Standardisasi fitur dilakukan menggunakan **StandardScaler** dari scikit-learn d
 | Transform pada | Train, Validasi, dan Test |
 | Konversi tipe data | `float64` → `float32` (hemat memori) |
 | Jumlah fitur final | 49 |
+
+Tabel 4.8 merangkum proses transformasi data yang diterapkan. StandardScaler melakukan normalisasi Z-score dengan rumus $z = (x - \mu) / \sigma$, di mana $\mu$ dan $\sigma$ dihitung hanya dari data training (1.513.871 sampel) untuk mencegah *data leakage*. Transformasi yang sama kemudian diterapkan pada data validasi dan test menggunakan parameter $\mu$ dan $\sigma$ yang telah di-*fit* dari data training. Konversi tipe data dari `float64` ke `float32` mengurangi penggunaan memori hingga 50% tanpa kehilangan presisi yang signifikan untuk keperluan klasifikasi.
 
 ---
 
@@ -185,11 +199,17 @@ Untuk mengatasi ketidakseimbangan kelas yang ekstrem (rasio 122,28:1), diterapka
 | Probe | 11.712 (0,77%) | 32,3145 | 8,4038 | 98.425,14 |
 | Malware | 53.607 (3,54%) | 7,0600 | 3,9281 | 210.572,31 |
 
+Tabel 4.9 menampilkan detail distribusi bobot hybrid untuk setiap kelas. Kolom "Bobot Balanced (Raw)" menunjukkan bobot awal yang dihitung secara proporsional terbalik terhadap frekuensi kelas — kelas Probe yang paling minoritas mendapat bobot tertinggi (32,3145), sementara kelas Normal yang dominan mendapat bobot terendah (0,2643). Kolom "Bobot Hybrid" menunjukkan bobot setelah transformasi `sqrt` dan normalisasi, yang secara signifikan memoderasi perbedaan bobot (rentang 0,76–8,40 dibanding 0,26–32,31 pada bobot raw). Kolom "Efektif Sampel" menunjukkan jumlah sampel efektif setelah pembobotan — meskipun kelas Normal memiliki 1,4 juta sampel asli, efektif sampelnya turun menjadi ~1,09 juta, sementara kelas Probe naik dari ~12 ribu menjadi ~98 ribu secara efektif.
+
 > **[GAMBAR 4.2 — Visualisasi Distribusi Bobot dan Efektif Sampel per Kelas]**
 > *Deskripsi: Diagram batang yang membandingkan distribusi asli vs distribusi efektif setelah pembobotan hybrid, menunjukkan efek pemerataan kelas. File referensi: `distribusi_dan_bobot_skripsi.png`.*
 
+Gambar 4.2 memvisualisasikan perbandingan antara jumlah sampel asli dan jumlah sampel efektif setelah pembobotan untuk setiap kelas. Diagram ini menunjukkan bagaimana strategi hybrid berhasil mempersempit kesenjangan distribusi antar kelas — rasio antara kelas terbesar dan terkecil berkurang dari 122,28:1 (distribusi asli) menjadi sekitar 11:1 (distribusi efektif). Hal ini memberikan sinyal pelatihan yang lebih seimbang kepada model tanpa sepenuhnya menghilangkan informasi prevalensi kelas.
+
 > **[GAMBAR 4.3 — Dampak Pembobotan terhadap Distribusi Kelas]**
 > *Deskripsi: Perbandingan visual antara distribusi kelas sebelum dan sesudah penerapan bobot hybrid, menunjukkan penurunan dominasi kelas Normal. File referensi: `impact_weighting_skripsi.png`.*
+
+Gambar 4.3 menyajikan perbandingan visual *before-after* penerapan bobot hybrid terhadap distribusi kelas. Sebelum pembobotan, kelas Normal mendominasi hampir seluruh distribusi (94,60%), membuat model cenderung bias untuk selalu memprediksi Normal. Setelah pembobotan, kontribusi efektif kelas Normal berkurang secara proporsional sementara kontribusi kelas serangan meningkat, sehingga model mendapatkan insentif yang lebih kuat untuk mempelajari pola-pola kelas minoritas.
 
 Statistik ringkasan bobot:
 - **Min Weight:** 0,7600 (Normal — mayoritas, penalti rendah)
@@ -218,6 +238,8 @@ Tiga metode sampling dibandingkan, masing-masing menjalankan **30 trial**:
 | NSGA-II | Evolutionary Algorithm | `NSGAIISampler(seed=42, population_size=10)` | 30 | 1.883,34 | 31,39 | 4 |
 | Random | Random Search (Baseline) | `RandomSampler(seed=42)` | 30 | 2.041,33 | 34,02 | 6 |
 
+Tabel 4.10 membandingkan kinerja ketiga metode sampling selama proses optimasi. TPE merupakan metode tercepat dengan waktu optimasi 1.488,16 detik (24,80 menit), diikuti NSGA-II (31,39 menit) dan Random (34,02 menit). Meskipun lebih lambat, Random Search menghasilkan jumlah solusi Pareto terbanyak (6 solusi), menunjukkan bahwa eksplorasi acak yang luas mampu menemukan lebih banyak titik *trade-off* yang beragam. TPE yang berbasis Bayesian menghasilkan 5 solusi Pareto dengan waktu lebih efisien karena kemampuannya memodelkan hubungan antara hiperparameter dan performa, sehingga mengarahkan pencarian ke region yang lebih menjanjikan.
+
 Total: **90 model** dilatih selama proses optimasi (~90 menit total).
 
 Ruang pencarian hiperparameter (*search space*) yang digunakan:
@@ -237,8 +259,12 @@ Ruang pencarian hiperparameter (*search space*) yang digunakan:
 | `reg_alpha` (L1) | Float (log) | [1e-6 – 1,0] | Seleksi fitur lunak |
 | `reg_lambda` (L2) | Float (log) | [1e-6 – 1,0] | Pencegahan overfitting |
 
+Tabel 4.11 mendefinisikan ruang pencarian 10 hiperparameter yang dioptimasi. Pemilihan rentang dan tipe sampling didasarkan pada *best practice* XGBoost: `learning_rate` dan parameter regularisasi (`reg_alpha`, `reg_lambda`) menggunakan skala logaritmik karena sensitivitas model terhadap perubahan pada orde magnitud yang berbeda. Parameter `max_delta_step` secara khusus dimasukkan karena perannya dalam menstabilkan gradien pada kasus *class imbalance*. Rentang `n_estimators` yang lebar ([500, 2000]) memungkinkan eksplorasi model dari yang ringan hingga kompleks, memberikan ruang bagi optimasi multi-objective untuk menemukan *trade-off* antara akurasi dan kecepatan.
+
 > **[GAMBAR 4.4 — Grafik Riwayat Optimasi (Optimization History)]**
 > *Deskripsi: Grafik garis yang menunjukkan dinamika pencarian per trial untuk ketiga metode, menampilkan konvergensi F1-Score dan Latency sepanjang 30 trial. File referensi: `optimization_history_final.png`.*
+
+Gambar 4.4 menampilkan riwayat optimasi dari seluruh 30 trial untuk ketiga metode pada dua sumbu objektif (F1-Score dan Latency). Grafik ini menunjukkan pola konvergensi yang berbeda: TPE cenderung menunjukkan perbaikan bertahap yang konsisten seiring trial berjalan (*exploitation*), NSGA-II menunjukkan fluktuasi yang lebih besar karena mekanisme populasi dan mutasi (*exploration*), sementara Random Search menunjukkan sebaran yang paling acak namun sesekali menemukan solusi sangat baik. Dinamika ini mengkonfirmasi karakteristik teoritis masing-masing algoritma.
 
 > **[TABEL 4.12 — Statistik Konvergensi Optimasi]**
 
@@ -291,6 +317,8 @@ Analisis Pareto front mengidentifikasi solusi-solusi yang tidak didominasi (*non
 > **[GAMBAR 4.5 — Pareto Front Statis (Ketiga Metode)]**
 > *Deskripsi: Scatter plot yang menampilkan seluruh trial (titik transparan) dan solusi Pareto-optimal (titik tebal berwarna) untuk TPE (biru), NSGA-II (merah), dan Random (hijau) pada ruang F1-Score vs Latency. File referensi: `pareto_front_static_hd.png`.*
 
+Gambar 4.5 merupakan visualisasi kunci yang menampilkan *Pareto front* dari ketiga metode pada satu bidang koordinat F1-Score (sumbu-y) vs Latensi (sumbu-x). Setiap titik merepresentasikan satu trial, dengan titik yang lebih besar dan tebal menandai solusi Pareto-optimal. Dari grafik ini terlihat bahwa solusi Pareto ketiga metode membentuk frontier yang berdekatan, mengkonfirmasi kesetaraan kualitas antar metode. TPE cenderung mendominasi region latensi rendah (kiri bawah), sementara Random menemukan solusi dengan F1 tertinggi namun latensi lebih besar (kanan atas). NSGA-II berada di antara keduanya dengan sebaran yang lebih terkontrol.
+
 > **[TABEL 4.14 — Solusi Pareto-Optimal TPE (5 Solusi)]**
 
 | # | Trial ID | Macro F1 | Latensi (µs) | n_estimators | learning_rate | max_depth |
@@ -301,6 +329,8 @@ Analisis Pareto front mengidentifikasi solusi-solusi yang tidak didominasi (*non
 | 4 | 4 | 0,8594 | 1,46 | 600 | 0,0539 | 6 |
 | 5 | 23 | 0,8565 | 1,40 | 500 | 0,0266 | 7 |
 
+Tabel 4.14 menyajikan 5 solusi Pareto-optimal yang ditemukan oleh metode TPE. Solusi-solusi ini membentuk *trade-off* yang jelas: solusi #1 (Trial 26) memberikan F1 tertinggi (0,8648) namun dengan latensi terbesar (2,05 µs), sementara solusi #5 (Trial 23) memberikan latensi terendah (1,40 µs) dengan kompromi F1 yang lebih rendah (0,8565). Rentang latensi TPE (1,40–2,05 µs) secara konsisten lebih rendah dibandingkan metode lainnya, yang disebabkan oleh kemampuan TPE dalam menemukan model dengan jumlah pohon yang lebih sedikit (500–700) tanpa mengorbankan F1 secara signifikan.
+
 > **[TABEL 4.15 — Solusi Pareto-Optimal NSGA-II (4 Solusi)]**
 
 | # | Trial ID | Macro F1 | Latensi (µs) | n_estimators | learning_rate | max_depth |
@@ -310,7 +340,7 @@ Analisis Pareto front mengidentifikasi solusi-solusi yang tidak didominasi (*non
 | 3 | 20 | 0,8597 | 3,12 | 1.700 | 0,0197 | 6 |
 | 4 | 4 | 0,8594 | 1,47 | 600 | 0,0539 | 6 |
 
-> **[TABEL 4.16 — Solusi Pareto-Optimal Random (6 Solusi)]**
+Tabel 4.15 menampilkan 4 solusi Pareto-optimal dari metode NSGA-II. Dibandingkan TPE, NSGA-II menghasilkan lebih sedikit solusi Pareto dan dengan rentang latensi yang lebih lebar (1,47–3,84 µs). Solusi terbaik NSGA-II (Trial 2, F1=0,8631) membutuhkan 1.400 pohon — lebih dari dua kali lipat jumlah pohon pada solusi terbaik TPE — yang berdampak pada latensi yang hampir dua kali lipat pula (3,84 vs 2,05 µs). Pola ini menunjukkan bahwa algoritma evolusioner NSGA-II cenderung menghasilkan model yang lebih berat untuk mencapai akurasi yang sebanding. — Solusi Pareto-Optimal Random (6 Solusi)]**
 
 | # | Trial ID | Macro F1 | Latensi (µs) | n_estimators | learning_rate | max_depth |
 |---|---|---|---|---|---|---|
@@ -320,6 +350,8 @@ Analisis Pareto front mengidentifikasi solusi-solusi yang tidak didominasi (*non
 | 4 | 29 | 0,8627 | 2,02 | 500 | 0,0114 | 11 |
 | 5 | 10 | 0,8621 | 1,50 | 500 | 0,0871 | 8 |
 | 6 | 4 | 0,8594 | 1,47 | 600 | 0,0539 | 6 |
+
+Tabel 4.16 menampilkan 6 solusi Pareto-optimal dari metode Random Search — jumlah terbanyak di antara ketiga metode. Solusi #1 (Trial 18) mencapai F1 tertinggi secara keseluruhan (0,8660) namun dengan latensi terbesar (4,00 µs) karena menggunakan 1.000 pohon dengan `max_depth=12`. Menariknya, dua solusi teratas Random (Trial 18 dan 11) keduanya menggunakan `max_depth=12`, menunjukkan bahwa model yang lebih dalam diperlukan untuk menangkap pola serangan yang kompleks. Meskipun Random Search tidak memiliki mekanisme pencarian terarah, keragaman eksplorasinya yang luas berhasil menemukan konfigurasi-konfigurasi yang kompetitif dan bahkan unggul dalam skor F1.
 
 Model Pareto terbaik dari masing-masing metode kemudian dilatih ulang pada data test (holdout) untuk evaluasi akhir:
 
@@ -332,14 +364,22 @@ Model Pareto terbaik dari masing-masing metode kemudian dilatih ulang pada data 
 | **Latency (µs/sample)** | 3,98 | **2,23** | 4,15 |
 | **Training Time (s)** | 70,05 | **34,70** | 66,19 |
 
+Tabel 4.17 merangkum perbandingan kinerja akhir dari model terbaik setiap metode pada data test (*holdout*) yang belum pernah dilihat selama pelatihan maupun optimasi. Perbedaan F1 Macro antar metode sangat kecil (0,8614–0,8642, selisih maksimum 0,0028), sementara perbedaan latensi jauh lebih mencolok — TPE hampir dua kali lebih cepat dari Random (2,23 vs 4,15 µs). Waktu pelatihan ulang (*retraining*) juga bervariasi signifikan: TPE membutuhkan hanya 34,70 detik berkat jumlah pohon yang lebih sedikit (600), sementara NSGA-II membutuhkan 70,05 detik untuk 1.400 pohon.
+
 > **[GAMBAR 4.6 — Diagram Batang Perbandingan Metrik antar Metode]**
 > *Deskripsi: Grouped bar chart yang membandingkan F1-Macro, Accuracy, Latency, dan Training Time untuk ketiga metode. File referensi: `metrics_grouped_bar.png`.*
+
+Gambar 4.6 menyajikan perbandingan visual empat metrik kinerja utama dalam format *grouped bar chart*. Dari visualisasi ini terlihat jelas bahwa metrik F1 dan Accuracy hampir tidak dapat dibedakan secara visual antar metode (bar hampir sama tinggi), sementara perbedaan Latency dan Training Time terlihat sangat mencolok — mengkonfirmasi bahwa diferensiasi utama antar metode terletak pada efisiensi komputasi, bukan kualitas deteksi.
 
 > **[GAMBAR 4.7 — Heatmap F1-Score per Kelas per Metode]**
 > *Deskripsi: Heatmap yang menampilkan F1-Score per kelas (Normal, DoS, Probe, Malware) untuk setiap metode optimasi. File referensi: `metrics_f1_heatmap.png`.*
 
+Gambar 4.7 menampilkan heatmap F1-Score yang memungkinkan perbandingan per-kelas secara visual. Pola warna menunjukkan bahwa kelas Normal konsisten mendapat F1 sempurna (1,0000) di semua metode (warna terdalam), kelas Malware mencapai F1 yang tinggi (~0,90), kelas DoS berada di level menengah-tinggi (~0,82), sementara kelas Probe konsisten menjadi kelas tersulit dengan F1 terendah (~0,73). Pola ini seragam di ketiga metode, menunjukkan bahwa kesulitan klasifikasi bersifat inheren terhadap karakteristik data, bukan keterbatasan metode optimasi tertentu.
+
 > **[GAMBAR 4.8 — Scatter Plot Precision vs Recall per Kelas]**
 > *Deskripsi: Scatter plot yang memposisikan setiap kelas pada ruang Precision × Recall untuk ketiga metode. File referensi: `metrics_pr_scatter.png`.*
+
+Gambar 4.8 memvisualisasikan *trade-off* antara Precision dan Recall untuk setiap kelas pada ruang dua dimensi. Titik-titik yang berada di kanan atas menunjukkan kinerja ideal (precision dan recall sama-sama tinggi). Kelas Normal berada di pojok kanan atas (sempurna), Malware berada di kuadran tinggi dengan recall yang sedikit lebih unggul dari precision (model lebih sensitif terhadap Malware), sementara Probe dan DoS menunjukkan *trade-off* yang lebih jelas — DoS memiliki precision lebih tinggi namun recall lebih rendah, menandakan model lebih konservatif dalam mendeteksi DoS.
 
 Hasil evaluasi menunjukkan:
 - **Juara Akurasi (F1):** Random (F1 Macro = 0,8642, Accuracy = 99,27%)
@@ -359,7 +399,7 @@ Hasil evaluasi menunjukkan:
 | **Macro avg** | **0,8742** | **0,8514** | **0,8614** | 473.085 |
 | Weighted avg | 0,9925 | 0,9925 | 0,9925 | 473.085 |
 
-> **[TABEL 4.19 — Classification Report TPE (Test Set)]**
+Tabel 4.18 menyajikan laporan klasifikasi detail untuk model NSGA-II pada data test. Kelas Normal mencapai skor sempurna (precision, recall, F1 = 1,0000), menandakan bahwa model tidak pernah salah mengklasifikasikan lalu lintas normal sebagai serangan (zero false positive untuk Normal). Kelas Malware juga menunjukkan kinerja baik (F1 = 0,9030) dengan recall (0,9235) yang lebih tinggi dari precision (0,8834), artinya model lebih cenderung mendeteksi Malware meskipun kadang menghasilkan alarm palsu. Kelas DoS memiliki F1 = 0,8148 dengan recall yang lebih rendah (0,7563), menunjukkan bahwa sekitar 24% serangan DoS lolos tidak terdeteksi. Kelas Probe menjadi yang tersulit (F1 = 0,7279) karena kemiripan pola dengan kelas lain. — Classification Report TPE (Test Set)]**
 
 | Kelas | Precision | Recall | F1-Score | Support |
 |---|---|---|---|---|
@@ -370,7 +410,7 @@ Hasil evaluasi menunjukkan:
 | **Macro avg** | **0,8758** | **0,8528** | **0,8629** | 473.085 |
 | Weighted avg | 0,9926 | 0,9926 | 0,9925 | 473.085 |
 
-> **[TABEL 4.20 — Classification Report Random (Test Set)]**
+Tabel 4.19 menyajikan laporan klasifikasi untuk model TPE. Pola kinerja serupa dengan NSGA-II namun dengan sedikit peningkatan: DoS F1 meningkat menjadi 0,8181 (+0,0033), Probe F1 naik menjadi 0,7291 (+0,0012), dan Malware F1 naik menjadi 0,9043 (+0,0013). Peningkatan ini konsisten di semua kelas serangan, mengindikasikan bahwa konfigurasi hiperparameter TPE (600 pohon, `max_depth=10`) memberikan keseimbangan yang sedikit lebih baik antara kemampuan generalisasi dan kapasitas model. — Classification Report Random (Test Set)]**
 
 | Kelas | Precision | Recall | F1-Score | Support |
 |---|---|---|---|---|
@@ -381,8 +421,12 @@ Hasil evaluasi menunjukkan:
 | **Macro avg** | **0,8797** | **0,8516** | **0,8642** | 473.085 |
 | Weighted avg | 0,9927 | 0,9927 | 0,9926 | 473.085 |
 
+Tabel 4.20 menyajikan laporan klasifikasi untuk model Random, yang mencatat F1 Macro tertinggi (0,8642). Model ini menunjukkan precision tertinggi untuk DoS (0,8907) dan Probe (0,7452), namun recall Probe justru terendah (0,7137). Kelas Malware mencapai recall tertinggi di antara ketiga metode (0,9299), menunjukkan bahwa model Random paling sensitif terhadap serangan Malware. Perbedaan antar metode pada level per-kelas tetap sangat kecil (orde 0,001–0,003), memperkuat kesimpulan bahwa kualitas klasifikasi antar metode secara substansial setara.
+
 > **[GAMBAR 4.9 — Ringkasan Recall per Kelas untuk Ketiga Metode]**
 > *Deskripsi: Bar chart horizontal yang membandingkan recall setiap kelas serangan (DoS, Probe, Malware) antar metode. File referensi: `recall_summary_chart.png`.*
+
+Gambar 4.9 memfokuskan perbandingan recall antar metode untuk kelas-kelas serangan (DoS, Probe, Malware). Recall dipilih sebagai metrik fokus karena dalam konteks NIDS, recall merepresentasikan *detection rate* — proporsi serangan yang berhasil dideteksi. Dari visualisasi ini terlihat bahwa Malware memiliki detection rate tertinggi (>92%) di semua metode, DoS berada di tingkat menengah (~76%), dan Probe memiliki detection rate terendah (~71–73%). Perbedaan recall antar metode untuk setiap kelas sangat minimal, mengkonfirmasi kesetaraan kemampuan deteksi.
 
 ---
 
@@ -393,8 +437,12 @@ Hasil evaluasi menunjukkan:
 > **[GAMBAR 4.10 — Confusion Matrix Raw (Ketiga Metode)]**
 > *Deskripsi: Tiga heatmap confusion matrix berdampingan (NSGA-II, TPE, Random) yang menampilkan jumlah prediksi aktual per sel. Diagonal menunjukkan prediksi benar, off-diagonal menunjukkan kesalahan. File referensi: `cm_raw_heatmap.png`.*
 
+Gambar 4.10 menampilkan tiga confusion matrix dalam format heatmap yang memvisualisasikan distribusi prediksi model secara absolut (jumlah sampel). Warna yang lebih gelap pada diagonal utama menunjukkan jumlah prediksi benar yang dominan. Dari visualisasi ini terlihat bahwa sel-sel off-diagonal (kesalahan) terkonsentrasi pada interaksi antara kelas DoS, Probe, dan Malware — sementara kelas Normal hampir tidak memiliki kesalahan yang terlihat secara visual karena jumlah sampelnya yang sangat besar (447.546 sampel benar).
+
 > **[GAMBAR 4.11 — Confusion Matrix Normalized (Ketiga Metode)]**
 > *Deskripsi: Tiga heatmap confusion matrix ternormalisasi (per baris/recall) yang menampilkan persentase prediksi untuk setiap kelas aktual. File referensi: `cm_norm_heatmap.png`.*
+
+Gambar 4.11 melengkapi Gambar 4.10 dengan menyajikan confusion matrix yang dinormalisasi per baris (recall-based). Normalisasi ini penting karena menghilangkan efek perbedaan jumlah sampel antar kelas, sehingga proporsi kesalahan untuk setiap kelas dapat dibandingkan secara adil. Sel diagonal menunjukkan recall per kelas (proporsi prediksi benar), sedangkan sel off-diagonal menunjukkan proporsi kesalahan spesifik. Dari heatmap ini, pola kesalahan Probe → Malware dan DoS → Malware menjadi sangat jelas terlihat sebagai sel off-diagonal berwarna paling menonjol.
 
 Analisis kesalahan klasifikasi (*misclassification*) mengungkap pola konsisten di ketiga metode:
 
@@ -412,6 +460,8 @@ Analisis kesalahan klasifikasi (*misclassification*) mengungkap pola konsisten d
 | Random | Probe → Malware | 1.000 | 27,3% |
 | Random | Malware → Probe | 743 | 4,4% |
 
+Tabel 4.21 mengidentifikasi tiga pola kesalahan klasifikasi yang paling dominan secara kuantitatif. Pola pertama, **Probe → Malware** (25,8–27,3%), merupakan kesalahan terbesar di mana lebih dari seperempat sampel Probe salah diklasifikasikan sebagai Malware. Hal ini dapat disebabkan oleh tumpang tindih fitur antara aktivitas *reconnaissance* (Probe) yang sering mendahului serangan eksploitasi (Malware). Pola kedua, **DoS → Malware** (20,8–21,2%), menunjukkan bahwa sekitar seperlima serangan DoS memiliki profil lalu lintas yang menyerupai Malware. Pola ketiga, **Malware → Probe** (4,4–4,9%), memiliki tingkat kesalahan yang jauh lebih rendah namun masih konsisten di ketiga metode. Konsistensi pola kesalahan ini di seluruh metode mengindikasikan bahwa masalah bersumber dari kemiripan inheren antar kelas, bukan dari kelemahan algoritma optimasi.
+
 Kesalahan dominan adalah **Probe → Malware** (25,8–27,3%) dan **DoS → Malware** (20,8–21,2%). Hal ini dapat dijelaskan oleh kesamaan pola lalu lintas jaringan antara kelas-kelas tersebut, di mana serangan Probe (Reconnaissance) dan DoS seringkali memiliki karakteristik flow yang mirip dengan serangan Malware (Exploits, Fuzzers).
 
 #### Cohen's Kappa
@@ -424,8 +474,12 @@ Kesalahan dominan adalah **Probe → Malware** (25,8–27,3%) dan **DoS → Malw
 | TPE | 0,9287 | Almost Perfect (Sangat Andal) |
 | NSGA-II | 0,9278 | Almost Perfect (Sangat Andal) |
 
+Tabel 4.22 menampilkan skor Cohen's Kappa untuk setiap metode. Cohen's Kappa mengukur tingkat kesepakatan (*agreement*) antara prediksi model dan label aktual dengan memperhitungkan kesepakatan yang terjadi secara kebetulan. Nilai Kappa berkisar dari -1 (kesepakatan lebih buruk dari acak) hingga 1 (kesepakatan sempurna). Ketiga metode mencapai Kappa > 0,92 yang berada dalam rentang 0,81–1,00 kategori "Almost Perfect" menurut skala Landis & Koch (1977). Selisih Kappa antar metode sangat kecil (0,0020), mengkonfirmasi kesetaraan reliabilitas klasifikasi.
+
 > **[GAMBAR 4.12 — Diagram Batang Perbandingan Cohen's Kappa]**
 > *Deskripsi: Bar chart yang memvisualisasikan skor Kappa ketiga metode dengan garis threshold interpretasi (0,81–1,00 = Almost Perfect). File referensi: `kappa_comparison.png`.*
+
+Gambar 4.12 memvisualisasikan perbandingan skor Kappa dalam format diagram batang dengan garis referensi yang menandai batas kategori interpretasi. Dari visualisasi ini terlihat bahwa ketiga batang memiliki tinggi yang hampir identik dan semuanya berada jauh di atas threshold "Almost Perfect" (0,81), memberikan konfirmasi visual bahwa seluruh model memiliki reliabilitas klasifikasi yang sangat tinggi dan konsisten.
 
 Seluruh metode menghasilkan skor Kappa di atas 0,92, yang termasuk dalam kategori **"Almost Perfect Agreement"** menurut skala Landis & Koch (1977). Ini mengindikasikan bahwa kesepakatan antara prediksi model dan label aktual sangat tinggi dan jauh melampaui kesepakatan secara kebetulan (*chance agreement*).
 
@@ -446,8 +500,12 @@ Untuk memvalidasi apakah perbedaan kinerja antar metode bersifat signifikan seca
 | 5 | 0,8443 | 0,2394 | 0,8451 | 0,1427 | 0,8435 | 0,2495 |
 | **Mean** | **0,8444** | **0,2404** | **0,8475** | **0,1415** | **0,8455** | **0,2473** |
 
+Tabel 4.23 menyajikan hasil detail 5-fold cross-validation untuk ketiga metode. Setiap fold dijalankan pada subset yang berbeda dari 20% sampel data (302.774 sampel) untuk memastikan stabilitas hasil. Dari tabel ini terlihat bahwa variasi F1 antar fold sangat kecil untuk semua metode (rentang ~0,84–0,85), menunjukkan stabilitas model yang tinggi terhadap perubahan data. TPE secara konsisten mencatat waktu inferensi yang paling cepat di setiap fold (~0,14 detik vs ~0,24 detik untuk NSGA-II dan Random), mengkonfirmasi keunggulan latensi yang teramati pada evaluasi test set.
+
 > **[GAMBAR 4.13 — Boxplot Cross-Validation F1-Score dan Inference Time]**
 > *Deskripsi: Dua boxplot berdampingan yang menampilkan distribusi F1-Score dan Inference Time dari 5-fold CV untuk ketiga metode, menunjukkan sebaran dan median. File referensi: `cv_stats_boxplot.png`.*
+
+Gambar 4.13 memvisualisasikan distribusi hasil cross-validation dalam format boxplot. Boxplot F1-Score menunjukkan bahwa median dan *interquartile range* (IQR) ketiga metode sangat tumpang tindih, secara visual mengkonfirmasi kesetaraan performa deteksi. Sebaliknya, boxplot Inference Time menunjukkan pemisahan yang jelas — box TPE terletak jauh di bawah box NSGA-II dan Random tanpa ada tumpang tindih, memberikan bukti visual yang kuat bahwa perbedaan kecepatan bersifat konsisten dan bukan artefak pengukuran tunggal.
 
 > **[TABEL 4.24 — Hasil Uji Kruskal-Wallis]**
 
@@ -455,6 +513,8 @@ Untuk memvalidasi apakah perbedaan kinerja antar metode bersifat signifikan seca
 |---|---|---|---|---|
 | **F1-Score** | 1,8600 | 0,3946 | **TIDAK Signifikan** (p > 0,05) | Performa deteksi ketiga metode dianggap **setara secara statistik** |
 | **Inference Time** | 12,5000 | 0,0019 | **Signifikan** (p < 0,05) | Terdapat perbedaan nyata; **TPE adalah pemenang statistik** untuk kecepatan |
+
+Tabel 4.24 menyajikan hasil uji Kruskal-Wallis yang merupakan uji non-parametrik untuk membandingkan distribusi tiga atau lebih kelompok independen. Uji ini dipilih karena tidak mengasumsikan normalitas distribusi data, yang sesuai dengan jumlah sampel yang relatif kecil per kelompok (5 fold). Untuk F1-Score, H-statistic yang rendah (1,86) dan p-value yang tinggi (0,3946 > 0,05) menunjukkan bahwa hipotesis nol "tidak ada perbedaan signifikan" **tidak dapat ditolak** — ketiga metode secara statistik menghasilkan F1-Score yang setara. Untuk Inference Time, H-statistic yang tinggi (12,50) dan p-value yang sangat rendah (0,0019 < 0,05) menunjukkan bahwa perbedaan waktu inferensi bersifat **signifikan secara statistik**, dengan TPE (mean = 0,1415s) sebagai pemenang yang jelas.
 
 Temuan ini memiliki implikasi penting:
 1. **Dari segi kualitas deteksi (F1-Score):** Tidak ada metode yang secara signifikan lebih unggul — ketiga metode HPO menghasilkan kualitas klasifikasi yang setara. Artinya, pemilihan metode sampling tidak berdampak signifikan pada akurasi deteksi.
