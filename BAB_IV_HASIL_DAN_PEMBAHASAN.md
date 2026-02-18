@@ -6,6 +6,8 @@ Bab ini memaparkan hasil eksperimen secara empiris dan sistematis, mulai dari ko
 
 ## 4.1 Implementasi Lingkungan dan Deskripsi Data
 
+Tahap awal dalam setiap penelitian berbasis eksperimen komputasional adalah memastikan bahwa lingkungan eksperimen terdokumentasi secara lengkap dan dataset yang digunakan memenuhi kriteria representativitas yang memadai. Pada sub-bab ini, dipaparkan spesifikasi perangkat keras dan perangkat lunak yang digunakan selama eksperimen, serta karakteristik dataset NF-UNSW-NB15-v3 yang menjadi basis pelatihan dan evaluasi model XGBoost untuk klasifikasi intrusi jaringan. Dokumentasi yang menyeluruh terhadap kedua aspek ini merupakan prasyarat reprodusibilitas ilmiah (Pineau dkk., 2021) sekaligus menjadi landasan bagi seluruh tahapan analisis yang akan disajikan pada sub-bab berikutnya.
+
 ### 4.1.1 Spesifikasi Lingkungan Eksperimen
 
 Reprodusibilitas merupakan prinsip fundamental dalam penelitian berbasis eksperimen komputasional (Pineau dkk., 2021). Untuk memenuhi prinsip tersebut, seluruh konfigurasi perangkat keras, perangkat lunak, dan parameter penelitian didokumentasikan secara lengkap. Eksperimen dijalankan pada platform Kaggle Notebook yang menyediakan akselerasi GPU, dengan spesifikasi yang tercantum pada Tabel 4.1.
@@ -74,6 +76,8 @@ Gambar 4.1 memvisualisasikan distribusi keempat kelas secara grafis, memperjelas
 ---
 
 ## 4.2 Hasil Pra-pemrosesan Data
+
+Kualitas data yang masuk ke dalam pipeline pelatihan secara langsung menentukan kualitas model yang dihasilkan — prinsip yang dikenal sebagai *garbage in, garbage out* dalam literatur *machine learning* (Gudivada dkk., 2017). Sub-bab ini menyajikan hasil tahap pra-pemrosesan yang mencakup eliminasi fitur-fitur yang berpotensi menyebabkan bias atau kebocoran data, pembersihan nilai hilang serta nilai tak hingga, dan verifikasi kesiapan seluruh fitur untuk pemodelan. Setiap langkah dilakukan secara sistematis mengikuti prosedur yang telah dirancang pada Bab III, dengan tujuan menghasilkan dataset bersih yang memungkinkan model XGBoost mempelajari pola perilaku lalu lintas jaringan secara objektif tanpa terkontaminasi artefak data.
 
 ### 4.2.1 Hasil Pembersihan Fitur dan Data Hilang
 
@@ -146,6 +150,8 @@ Tabel 4.6 memuat 49 fitur yang secara komprehensif merepresentasikan berbagai as
 ---
 
 ## 4.3 Hasil Transformasi Data
+
+Setelah data dibersihkan pada tahap pra-pemrosesan, langkah selanjutnya adalah mentransformasikan data ke dalam format yang optimal untuk pelatihan model. Sub-bab ini membahas dua aspek transformasi yang krusial: pertama, strategi pembagian data secara stratifikasi dan standardisasi fitur menggunakan Z-score normalization untuk menjaga integritas statistik antar subset; kedua, penerapan strategi *hybrid cost-sensitive weighting* untuk mengatasi ketidakseimbangan kelas dengan rasio 122,28:1 yang teridentifikasi pada sub-bab sebelumnya. Kedua transformasi ini dirancang berdasarkan prinsip-prinsip yang mapan dalam literatur — stratified splitting untuk mempertahankan representasi kelas (Raschka, 2018) dan pembobotan berbasis biaya untuk mengurangi bias terhadap kelas mayoritas tanpa mengubah distribusi data asli (Krawczyk, 2016) — sehingga model memperoleh sinyal pelatihan yang seimbang dan mampu mendeteksi berbagai jenis serangan jaringan secara efektif.
 
 ### 4.3.1 Hasil Penyandian dan Standardisasi
 
@@ -224,6 +230,8 @@ Statistik ringkasan bobot mengkonfirmasi kewajaran distribusi:
 ---
 
 ## 4.4 Hasil Optimasi Model Multi-Objective
+
+Optimasi hiperparameter merupakan inti dari penelitian ini, di mana tiga metode sampling — TPE, NSGA-II, dan Random Search — dibandingkan kemampuannya dalam menavigasi ruang pencarian berdimensi tinggi untuk menemukan konfigurasi XGBoost yang secara simultan memaksimalkan *Macro F1-Score* dan meminimalkan *Inference Latency*. Sub-bab ini menyajikan hasil eksperimen optimasi multi-objective secara menyeluruh, mulai dari dinamika pencarian selama 90 trial (30 trial per metode), pola konvergensi yang membedakan karakteristik tiap algoritma, hingga analisis komparatif terhadap konfigurasi hiperparameter optimal yang ditemukan. Pendekatan multi-objective ini dilandasi oleh teori optimasi Pareto (Deb, 2001) yang mengakui bahwa pada permasalahan dengan objektif berkonflik, tidak ada satu solusi tunggal yang optimal — melainkan sekumpulan solusi *trade-off* yang masing-masing merepresentasikan kompromi terbaik antara kualitas deteksi dan efisiensi komputasi.
 
 ### 4.4.1 Dinamika Pencarian Hiperparameter
 
@@ -317,6 +325,8 @@ Tabel 4.13 mengungkap beberapa pola menarik yang menghubungkan konfigurasi hiper
 ---
 
 ## 4.5 Evaluasi Kinerja Model
+
+Evaluasi kinerja model merupakan tahap kritis yang menentukan validitas dan reliabilitas seluruh proses optimasi yang telah dilakukan. Sub-bab ini menyajikan evaluasi komprehensif melalui tiga perspektif analitis yang saling melengkapi: analisis Pareto front untuk mengidentifikasi trade-off optimal antara kualitas deteksi dan kecepatan inferensi, analisis kesalahan klasifikasi melalui confusion matrix dan Cohen's Kappa untuk mengukur reliabilitas prediksi, serta validasi signifikansi statistik menggunakan uji Kruskal-Wallis pada hasil cross-validation untuk memastikan bahwa perbedaan performa yang teramati bersifat genuine — bukan sekadar fluktuasi stokastik. Pendekatan evaluasi multi-aspek ini sejalan dengan rekomendasi Japkowicz dan Shah (2011) yang menekankan pentingnya menggunakan beragam metrik dan uji statistik untuk memperoleh gambaran kinerja model yang utuh, terutama pada dataset dengan ketidakseimbangan kelas yang ekstrem.
 
 ### 4.5.1 Analisis Pareto Front (Trade-off Solusi)
 
@@ -545,6 +555,8 @@ Kombinasi kedua temuan ini menghasilkan rekomendasi yang terarah:
 
 ## 4.6 Interpretasi Transparansi Model
 
+Di luar pencapaian performa prediktif, pemahaman terhadap mekanisme internal model merupakan aspek yang semakin ditekankan dalam pengembangan sistem berbasis kecerdasan buatan yang dapat dipercaya (*trustworthy AI*), khususnya di domain keamanan siber yang bersifat kritis (Arrieta dkk., 2020). Sub-bab ini menguraikan dua dimensi transparansi model: pertama, analisis pengaruh relatif setiap hiperparameter terhadap kedua fungsi tujuan (F1-Score dan Latency) menggunakan teknik surrogate model, yang mengungkap faktor-faktor pengendali utama performa; kedua, analisis kepentingan fitur (*feature importance*) berbasis metrik Gain dari XGBoost, yang mengidentifikasi atribut-atribut lalu lintas jaringan yang paling berkontribusi dalam keputusan klasifikasi. Kedua analisis ini tidak hanya meningkatkan interpretabilitas model, tetapi juga memberikan wawasan praktis bagi praktisi keamanan jaringan mengenai fitur-fitur yang perlu diprioritaskan dalam pemantauan serta panduan bagi peneliti yang ingin melakukan penyesuaian hiperparameter secara terarah.
+
 ### 4.6.1 Analisis Pengaruh Hiperparameter (Surrogate Model)
 
 Memahami **mengapa** suatu konfigurasi hiperparameter menghasilkan performa tertentu sama pentingnya dengan menemukan konfigurasi optimal itu sendiri. Transparansi proses optimasi berkontribusi pada *trustworthiness* sistem AI, sebuah aspek yang semakin ditekankan dalam literatur keamanan siber (Arrieta dkk., 2020). Untuk menganalisis pengaruh relatif setiap hiperparameter, diterapkan teknik **Random Forest Surrogate Model** — di mana model surrogate dilatih untuk memprediksi metrik performa berdasarkan vektor hiperparameter, kemudian *feature importance* dari model surrogate tersebut digunakan sebagai estimasi pengaruh (*importance*) setiap hiperparameter (Hutter dkk., 2014).
@@ -664,6 +676,8 @@ Gambar 4.21 memberikan pandangan holistik terhadap seluruh 49 fitur melalui form
 ---
 
 ## 4.7 Implementasi Simulasi Prototipe NIDS
+
+Validasi akhir suatu model klasifikasi tidak cukup hanya melalui evaluasi metrik pada data uji statis, melainkan perlu didemonstrasikan dalam konteks operasional yang mendekati skenario penerapan sesungguhnya (Sommer dan Paxson, 2010). Sub-bab ini mendokumentasikan implementasi prototipe *Network Intrusion Detection System* (NIDS) berbasis web yang dibangun menggunakan framework Streamlit, di mana model-model Pareto-optimal yang dihasilkan dari proses optimasi diintegrasikan ke dalam pipeline deteksi intrusi secara *near real-time*. Pembahasan mencakup dua aspek utama: desain antarmuka dashboard beserta arsitektur pipeline pemrosesan data, serta hasil pengujian pada dua skenario simulasi — baseline dengan lalu lintas normal untuk mengukur tingkat *false alarm*, dan injection dengan campuran serangan untuk mengevaluasi kemampuan deteksi aktual. Prototipe ini berfungsi sebagai *proof of concept* yang menjembatani temuan eksperimental dengan kebutuhan operasional praktis.
 
 ### 4.7.1 Tampilan Antarmuka Dashboard
 
