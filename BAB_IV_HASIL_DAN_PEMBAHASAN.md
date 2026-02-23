@@ -37,6 +37,32 @@ Tabel 4.1 merinci seluruh komponen lingkungan eksperimen. GPU Tesla P100 dipilih
 
 Penetapan `random seed = 42` diterapkan secara konsisten pada setiap tahap yang melibatkan stokastisitas — pembagian data, inisialisasi sampler Optuna, dan pelatihan model — guna menjamin bahwa seluruh hasil dapat direproduksi secara identik pada percobaan ulang.
 
+Kode Program 4.1 menampilkan potongan kode konfigurasi lingkungan eksperimen dan verifikasi ketersediaan GPU yang dijalankan pada awal notebook.
+
+> **[KODE PROGRAM 4.1 — Konfigurasi Lingkungan & Verifikasi GPU]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 1*
+
+```
+ 1  import xgboost as xgb
+ 2  from sklearn.model_selection import train_test_split, StratifiedKFold
+ 3  from sklearn.preprocessing import LabelEncoder, StandardScaler
+ 4  from sklearn.metrics import (classification_report, confusion_matrix,
+ 5                               f1_score, accuracy_score, cohen_kappa_score)
+ 6  from sklearn.utils.class_weight import compute_sample_weight
+ 7  import optuna
+ 8  from optuna.samplers import TPESampler, NSGAIISampler, RandomSampler
+ 9  from scipy.stats import kruskal
+10
+11  RANDOM_SEED = 42
+12  np.random.seed(RANDOM_SEED)
+13
+14  test_params = {'tree_method': 'hist', 'device': 'cuda'}
+15  test_model = xgb.XGBClassifier(**test_params, n_estimators=1, random_state=42)
+16  X_test = np.random.rand(100, 10)
+17  y_test = np.random.randint(0, 2, 100)
+18  test_model.fit(X_test, y_test, verbose=False)
+```
+
 ---
 
 ### 4.1.2 Karakteristik Dataset Terpilih
@@ -72,6 +98,31 @@ Tabel 4.3 mengungkap ketidakseimbangan kelas yang sangat ekstrem: kelas Normal m
 > *Deskripsi: Visualisasi proporsi keempat kelas (Normal, DoS, Probe, Malware) yang menggambarkan ketidakseimbangan ekstrem pada dataset. File referensi: `distribusi_dan_bobot_skripsi.png`.*
 
 Gambar 4.1 memvisualisasikan distribusi keempat kelas secara grafis, memperjelas dominasi kelas Normal yang menempati lebih dari 94% ruang diagram. Secara kuantitatif, **rasio ketidakseimbangan mencapai 122,28 : 1** antara kelas mayoritas (Normal = 2.237.731 sampel) dan kelas minoritas terkecil (Probe = 18.300 sampel). Rasio di atas 100:1 ini tergolong *extreme imbalance* yang dapat menyebabkan classifier bias terhadap kelas mayoritas jika tidak ditangani melalui strategi khusus seperti pembobotan kelas atau *resampling*.
+
+Kode Program 4.2 menunjukkan proses pemuatan dataset dan pemetaan 10 kategori serangan asli menjadi 4 kelas yang digunakan dalam penelitian ini.
+
+> **[KODE PROGRAM 4.2 — Pemuatan Dataset & Pemetaan Kelas]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 2*
+
+```
+ 1  df_full = pd.read_csv(data_path)
+ 2
+ 3  mapping_rules = {
+ 4      'Benign': 0,
+ 5      'DoS': 1, 'Generic': 1,
+ 6      'Reconnaissance': 2, 'Analysis': 2,
+ 7      'Exploits': 3, 'Fuzzers': 3, 'Backdoor': 3,
+ 8      'Shellcode': 3, 'Worms': 3
+ 9  }
+10
+11  df_full['mapped_label'] = df_full['Attack'].map(mapping_rules)
+12  df_full['mapped_label'] = df_full['mapped_label'].astype(int)
+13
+14  df_train_full, df_test_raw = train_test_split(
+15      df_full, test_size=0.2, random_state=42,
+16      stratify=df_full['mapped_label']
+17  )
+```
 
 ---
 
@@ -146,6 +197,28 @@ Verifikasi otomatis memastikan bahwa seluruh 49 fitur yang tersisa bersifat nume
 
 Tabel 4.6 memuat 49 fitur yang secara komprehensif merepresentasikan berbagai aspek aliran jaringan. Fitur-fitur ini mencakup: (1) informasi port dan protokol untuk identifikasi layanan, (2) volume lalu lintas masuk dan keluar untuk analisis beban, (3) flag TCP untuk deteksi anomali koneksi, (4) karakteristik temporal aliran untuk profiling durasi, (5) properti paket IP termasuk TTL dan panjang paket, (6) statistik throughput dan retransmisi untuk analisis kualitas koneksi, (7) distribusi ukuran paket untuk identifikasi pola trafik, (8) informasi protokol aplikasi (DNS, FTP, ICMP), serta (9) statistik *Inter-Arrival Time* (IAT) untuk analisis pola temporal paket. Keragaman dimensi fitur ini memungkinkan model menangkap pola serangan dari berbagai sudut pandang perilaku jaringan.
 
+Kode Program 4.3 menampilkan proses pembersihan kolom identitas, penanganan nilai NaN dan infinity, serta validasi kebersihan data.
+
+> **[KODE PROGRAM 4.3 — Pembersihan Kolom & Penanganan NaN/Infinity]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian pembersihan)*
+
+```
+ 1  cols_to_drop = [
+ 2      'FLOW_START_MILLISECONDS', 'FLOW_END_MILLISECONDS',
+ 3      'IPV4_SRC_ADDR', 'IPV4_DST_ADDR', 'Label'
+ 4  ]
+ 5  df_train_clean = df_train_full.drop(columns=cols_to_drop, errors='ignore')
+ 6  df_test_clean = df_test_raw.drop(columns=cols_to_drop, errors='ignore')
+ 7
+ 8  X_raw = df_train_clean.drop(columns=[target_col], errors='ignore')
+ 9  y_raw = df_train_clean[target_col]
+10
+11  X_raw.replace([np.inf, -np.inf], np.nan, inplace=True)
+12  train_medians = X_raw.median()
+13  X_raw.fillna(train_medians, inplace=True)
+14  X_test_final_raw.fillna(train_medians, inplace=True)
+```
+
 
 ---
 
@@ -188,6 +261,26 @@ Selanjutnya, standardisasi fitur dilakukan menggunakan **StandardScaler** dengan
 
 Tabel 4.8 mendokumentasikan langkah standardisasi yang diterapkan. StandardScaler mentransformasikan setiap fitur ke distribusi berpusat nol dengan simpangan baku satu ($z = (x - \mu) / \sigma$), di mana parameter $\mu$ dan $\sigma$ dihitung **eksklusif** dari data training. Normalisasi Z-score ini membantu stabilitas numerik dan konvergensi pada proses pelatihan. Konversi tipe data dari `float64` ke `float32` memangkas konsumsi memori hingga 50% tanpa dampak signifikan terhadap presisi klasifikasi.
 
+Kode Program 4.4 menampilkan proses standardisasi fitur dan pembagian data menjadi subset training dan validasi.
+
+> **[KODE PROGRAM 4.4 — Standardisasi & Pembagian Data]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian standardisasi)*
+
+```
+ 1  scaler = StandardScaler()
+ 2  X_enc = pd.DataFrame(scaler.fit_transform(X_raw), columns=X_raw.columns)
+ 3  X_test_enc = pd.DataFrame(scaler.transform(X_test_final_raw),
+ 4                            columns=X_test_final_raw.columns)
+ 5
+ 6  float_cols = X_enc.select_dtypes(include=['float64']).columns
+ 7  X_enc[float_cols] = X_enc[float_cols].astype('float32')
+ 8  X_test_enc[float_cols] = X_test_enc[float_cols].astype('float32')
+ 9
+10  X_train, X_val, y_train, y_val = train_test_split(
+11      X_selected, y, test_size=0.2, random_state=42, stratify=y
+12  )
+```
+
 ---
 
 ### 4.3.2 Distribusi Bobot Penanganan Imbalance
@@ -225,6 +318,17 @@ Statistik ringkasan bobot mengkonfirmasi kewajaran distribusi:
 - **Min Weight:** 0,7600 (Normal — kelas mayoritas, mendapat penalti rendah)
 - **Max Weight:** 8,4038 (Probe — kelas paling minoritas, mendapat penalti tertinggi)
 - **Mean Weight:** 1,0000 (ternormalisasi, menjaga stabilitas gradien)
+
+Kode Program 4.5 menampilkan implementasi strategi *Hybrid Cost-Sensitive Weighting* yang terdiri dari tiga langkah berurutan.
+
+> **[KODE PROGRAM 4.5 — Perhitungan Bobot Hybrid Cost-Sensitive]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian pembobotan)*
+
+```
+1  raw_weights = compute_sample_weight(class_weight='balanced', y=y_train)
+2  sample_weights_train = np.sqrt(raw_weights)
+3  sample_weights_train = sample_weights_train / sample_weights_train.mean()
+```
 
 
 ---
@@ -270,6 +374,74 @@ Secara keseluruhan, **90 model** dilatih selama proses optimasi (~90 menit total
 | `reg_lambda` (L2) | Float (log) | [1e-6 – 1,0] | Regularisasi L2; menghaluskan bobot untuk mencegah overfitting |
 
 Tabel 4.11 mendefinisikan 10 hiperparameter yang dioptimasi beserta rasional pemilihan rentangnya. Parameter `learning_rate` dan regularisasi (`reg_alpha`, `reg_lambda`) menggunakan skala logaritmik, sementara `max_delta_step` dimasukkan untuk menstabilkan pembaruan gradien pada kasus ketidakseimbangan kelas ekstrem. Rentang `n_estimators` yang lebar ([500, 2000]) dirancang untuk memberikan ruang eksplorasi *trade-off* antara akurasi dan kecepatan inferensi.
+
+Kode Program 4.6 menampilkan definisi fungsi objective multi-objective yang digunakan oleh Optuna, mencakup sampling hiperparameter, pelatihan model, dan pengukuran kedua objektif.
+
+> **[KODE PROGRAM 4.6 — Fungsi Objective Multi-Objective]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 4*
+
+```
+ 1  def objective_xgboost_multi(trial):
+ 2      param = {
+ 3          'n_estimators': trial.suggest_int('n_estimators', 500, 2000, step=100),
+ 4          'learning_rate': trial.suggest_float('learning_rate', 0.01, 0.3, log=True),
+ 5          'max_depth': trial.suggest_int('max_depth', 6, 12),
+ 6          'min_child_weight': trial.suggest_int('min_child_weight', 1, 7),
+ 7          'max_delta_step': trial.suggest_int('max_delta_step', 1, 8),
+ 8          'gamma': trial.suggest_float('gamma', 0.1, 0.5),
+ 9          'subsample': trial.suggest_float('subsample', 0.6, 0.95),
+10          'colsample_bytree': trial.suggest_float('colsample_bytree', 0.5, 0.9),
+11          'reg_alpha': trial.suggest_float('reg_alpha', 1e-6, 1.0, log=True),
+12          'reg_lambda': trial.suggest_float('reg_lambda', 1e-6, 1.0, log=True),
+13          'objective': 'multi:softmax', 'num_class': NUM_CLASSES,
+14          'tree_method': 'hist', 'device': 'cuda',
+15          'eval_metric': 'mlogloss', 'verbosity': 0, 'random_state': 42
+16      }
+17
+18      model = xgb.XGBClassifier(**param)
+19      model.fit(X_train, y_train, sample_weight=sample_weights_train,
+20                eval_set=[(X_val, y_val)], verbose=False)
+21
+22      start_time = time.perf_counter()
+23      preds = model.predict(X_val)
+24      end_time = time.perf_counter()
+25      latency_us = ((end_time - start_time) / len(X_val)) * 1_000_000
+26
+27      f1_macro = f1_score(y_val, preds, average='macro')
+28
+29      return f1_macro, latency_us
+```
+
+Kode Program 4.7 menampilkan konfigurasi dan eksekusi optimasi menggunakan tiga metode sampling Optuna secara berurutan.
+
+> **[KODE PROGRAM 4.7 — Konfigurasi & Eksekusi Optimasi Optuna]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 5.0 dan Cell 5.2*
+
+```
+ 1  N_TRIALS = 30
+ 2  SEED = 42
+ 3
+ 4  study_tpe = optuna.create_study(
+ 5      study_name="TPE_MultiObjective",
+ 6      directions=["maximize", "minimize"],
+ 7      sampler=TPESampler(seed=SEED)
+ 8  )
+ 9  study_tpe.optimize(objective_xgboost_multi, n_trials=N_TRIALS)
+10
+11  study_nsga = optuna.create_study(
+12      study_name="NSGA2_MultiObjective",
+13      directions=["maximize", "minimize"],
+14      sampler=NSGAIISampler(seed=SEED, population_size=10)
+15  )
+16  study_nsga.optimize(objective_xgboost_multi, n_trials=N_TRIALS)
+17
+18  study_random = optuna.create_study(
+19      study_name="Random_MultiObjective",
+20      directions=["maximize", "minimize"],
+21      sampler=RandomSampler(seed=SEED)
+22  )
+23  study_random.optimize(objective_xgboost_multi, n_trials=N_TRIALS)
+```
 
 > **[GAMBAR 4.4 — Grafik Riwayat Optimasi (Optimization History)]**
 > *Deskripsi: Grafik garis yang menunjukkan dinamika pencarian per trial untuk ketiga metode, menampilkan evolusi F1-Score dan Latency sepanjang 30 trial. File referensi: `optimization_history_final.png`.*
@@ -387,6 +559,36 @@ Model Pareto terbaik dari masing-masing metode kemudian dilatih ulang (*retrain*
 | **Training Time (s)** | 70,05 | **34,70** | 66,19 |
 
 Tabel 4.17 merangkum empat metrik kinerja yang menentukan. Dari perspektif kualitas deteksi, Random unggul tipis pada F1 Macro (0,8642) dan Accuracy (99,27%), namun selisih antar metode sangat kecil (rentang F1: 0,0028 atau 0,28%). Dari perspektif efisiensi operasional, TPE mendominasi dengan keunggulan yang signifikan: latensi inferensi hampir dua kali lipat lebih cepat (2,23 vs 4,15 µs) dan waktu pelatihan kurang dari setengah (34,70 vs 66,19 detik). Disparitas ini merupakan konsekuensi langsung dari jumlah pohon yang digunakan — 600 pohon (TPE) versus 1.000 (Random) dan 1.400 (NSGA-II).
+
+Kode Program 4.8 menampilkan proses retrain model dengan parameter terbaik dari Pareto front dan evaluasi pada data test holdout.
+
+> **[KODE PROGRAM 4.8 — Evaluasi Final & Retrain Model Terbaik]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 8*
+
+```
+ 1  def train_and_evaluate(study, name):
+ 2      pareto_front = study.best_trials
+ 3      best_trial = max(pareto_front, key=lambda t: t.values[0])
+ 4      best_params = best_trial.params
+ 5
+ 6      best_params.update({
+ 7          'objective': 'multi:softmax', 'num_class': len(target_names),
+ 8          'tree_method': 'hist', 'device': 'cuda',
+ 9          'eval_metric': 'mlogloss', 'verbosity': 0, 'random_state': 42
+10      })
+11
+12      model = xgb.XGBClassifier(**best_params)
+13      model.fit(X_train, y_train, sample_weight=sample_weights_train,
+14                eval_set=[(X_val, y_val)], verbose=False)
+15
+16      _ = model.predict(X_test_selected.iloc[:100])
+17      start_inf = time.perf_counter()
+18      preds = model.predict(X_test_selected)
+19      end_inf = time.perf_counter()
+20      latency_us = ((end_inf - start_inf) / len(X_test_selected)) * 1_000_000
+21
+22      return model, preds, latency_us
+```
 
 > **[GAMBAR 4.6 — Diagram Batang Perbandingan Metrik antar Metode]**
 > *Deskripsi: Grouped bar chart yang membandingkan F1-Macro, Accuracy, Latency, dan Training Time untuk ketiga metode secara berdampingan. File referensi: `metrics_grouped_bar.png`.*
@@ -509,6 +711,33 @@ Tabel 4.22 menunjukkan bahwa ketiga metode menghasilkan $\kappa > 0,92$, yang te
 
 Gambar 4.12 memvisualisasikan perbandingan $\kappa$ dalam format diagram batang yang dilengkapi garis referensi kategori interpretasi. Ketiga batang memiliki tinggi yang nyaris identik dan seluruhnya berada jauh di atas batas "Almost Perfect" (0,81), memberikan konfirmasi visual yang meyakinkan bahwa seluruh model memiliki tingkat keandalan klasifikasi yang sangat tinggi.
 
+Kode Program 4.9 menampilkan proses perhitungan Cohen's Kappa dan analisis pola kesalahan klasifikasi dari confusion matrix.
+
+> **[KODE PROGRAM 4.9 — Cohen's Kappa & Analisis Pola Kesalahan]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 10B*
+
+```
+ 1  for name, model in trained_models.items():
+ 2      preds = model.predict(X_test_selected)
+ 3      score = cohen_kappa_score(y_test_final, preds)
+ 4      kappa_data.append({'Metode': name, 'Kappa Score': score})
+ 5
+ 6  for name in trained_models.keys():
+ 7      model = trained_models[name]
+ 8      preds = model.predict(X_test_selected)
+ 9      cm = confusion_matrix(y_test_final, preds)
+10      errors = []
+11      for r in range(len(class_names)):
+12          for c in range(len(class_names)):
+13              if r != c and cm[r, c] > 0:
+14                  errors.append({
+15                      'Asli': class_names[r],
+16                      'Diprediksi': class_names[c],
+17                      'Jumlah': cm[r, c],
+18                      'Persentase': (cm[r, c] / cm[r].sum()) * 100
+19                  })
+```
+
 ---
 
 ### 4.5.3 Validasi Signifikansi Statistik (Kruskal-Wallis)
@@ -550,6 +779,38 @@ Kombinasi kedua temuan ini menghasilkan rekomendasi yang terarah:
 1. **Untuk skenario yang mengutamakan kualitas deteksi**, ketiga metode dapat digunakan secara bergantian karena menghasilkan performa yang setara secara statistik.
 2. **Untuk skenario *real-time* yang sensitif terhadap latensi**, TPE menjadi pilihan optimal karena menghasilkan model yang secara signifikan lebih cepat tanpa mengorbankan akurasi deteksi.
 
+Kode Program 4.10 menampilkan proses cross-validation 5-fold dan uji statistik Kruskal-Wallis untuk validasi signifikansi perbedaan antar metode.
+
+> **[KODE PROGRAM 4.10 — Cross-Validation & Uji Kruskal-Wallis]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 16*
+
+```
+ 1  N_FOLDS = 5
+ 2  X_cv, _, y_cv, _, w_cv, _ = train_test_split(
+ 3      X_train, y_train, sample_weights_train,
+ 4      train_size=0.20, stratify=y_train, random_state=42
+ 5  )
+ 6
+ 7  for name, obj in target_models.items():
+ 8      base_model = obj if not isinstance(obj, dict) else obj['model']
+ 9      params = base_model.get_params()
+10      cv_model = xgb.XGBClassifier(**params)
+11      skf = StratifiedKFold(n_splits=N_FOLDS, shuffle=True, random_state=42)
+12
+13      for fold, (tr_idx, va_idx) in enumerate(skf.split(X_cv, y_cv)):
+14          X_tr, X_va = X_cv.iloc[tr_idx], X_cv.iloc[va_idx]
+15          y_tr, y_va = y_cv[tr_idx], y_cv[va_idx]
+16          cv_model.fit(X_tr, y_tr, sample_weight=w_cv[tr_idx], verbose=False)
+17
+18          start_time = time.perf_counter()
+19          y_pred = cv_model.predict(X_va)
+20          end_time = time.perf_counter()
+21          scores_f1.append(f1_score(y_va, y_pred, average="macro"))
+22          scores_time.append(end_time - start_time)
+23
+24  stat, p = kruskal(*[cv_results[m]["f1_scores"] for m in cv_results])
+```
+
 
 ---
 
@@ -560,6 +821,36 @@ Di luar pencapaian performa prediktif, pemahaman terhadap mekanisme internal mod
 ### 4.6.1 Analisis Pengaruh Hiperparameter (Surrogate Model)
 
 Untuk menganalisis pengaruh relatif setiap hiperparameter terhadap performa model, diterapkan teknik **Random Forest Surrogate Model** — di mana model surrogate dilatih untuk memprediksi metrik performa berdasarkan vektor hiperparameter, kemudian *feature importance*-nya digunakan sebagai estimasi pengaruh setiap hiperparameter.
+
+Kode Program 4.11 menampilkan fungsi inti analisis importance menggunakan Random Forest Regressor sebagai surrogate model.
+
+> **[KODE PROGRAM 4.11 — Hyperparameter Importance (Surrogate RF)]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 11*
+
+```
+ 1  from sklearn.ensemble import RandomForestRegressor
+ 2
+ 3  def get_rf_importance(study, objective_name, objective_index):
+ 4      trials = [t for t in study.trials
+ 5                if t.state == optuna.trial.TrialState.COMPLETE]
+ 6      data = []
+ 7      for t in trials:
+ 8          row = {k: v for k, v in t.params.items()
+ 9                 if isinstance(v, (int, float))}
+10          row['target'] = t.values[objective_index]
+11          data.append(row)
+12
+13      df = pd.DataFrame(data)
+14      X = df.drop(columns='target')
+15      y = df['target']
+16
+17      model = RandomForestRegressor(
+18          n_estimators=100, max_depth=10, random_state=42, n_jobs=-1
+19      )
+20      model.fit(X, y)
+21      importances = pd.Series(model.feature_importances_, index=X.columns)
+22      return importances.sort_values(ascending=False)
+```
 
 #### Pengaruh Hiperparameter terhadap F1-Score
 
@@ -620,6 +911,31 @@ Gambar 4.19 memperlihatkan pola yang konsisten dengan NSGA-II, di mana `n_estima
 ### 4.6.2 Analisis Kepentingan Fitur (XGBoost Feature Importance)
 
 Analisis kepentingan fitur dilakukan menggunakan metrik **Gain** dari XGBoost, yang mengukur peningkatan rata-rata kualitas split (*loss reduction*) yang dikontribusikan oleh setiap fitur di seluruh pohon dalam ensemble.
+
+Kode Program 4.12 menampilkan proses ekstraksi feature importance berbasis Gain dari model XGBoost yang telah dilatih.
+
+> **[KODE PROGRAM 4.12 — Feature Importance XGBoost (Gain)]**
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 13*
+
+```
+ 1  feature_importance_data = {}
+ 2
+ 3  for name, model in trained_models.items():
+ 4      booster = model.get_booster()
+ 5      importance_dict = booster.get_score(importance_type='gain')
+ 6      all_features = booster.feature_names
+ 7      full_importance = {f: importance_dict.get(f, 0.0)
+ 8                         for f in all_features}
+ 9      feature_importance_data[name] = full_importance
+10
+11  global_scores = {}
+12  for imp in feature_importance_data.values():
+13      for f, v in imp.items():
+14          global_scores[f] = global_scores.get(f, 0) + v
+15
+16  top_20_global = [x[0] for x in sorted(
+17      global_scores.items(), key=lambda x: x[1], reverse=True)[:20]]
+```
 
 > **[TABEL 4.27 — Top 10 Fitur Terpenting (Rata-rata Gain dari Ketiga Metode)]**
 
@@ -698,6 +1014,42 @@ Pipeline pemrosesan data dalam prototipe terdiri dari 5 tahap sekuensial yang di
 4. **Dekoding Keputusan** — Kelas integer (0–3) dipetakan ke label yang bermakna (Normal, DoS, Probe, Malware) dengan *confidence score* dari probabilitas tertinggi.
 5. **Visualisasi & UI** — Indikator status, gauge latensi, kartu peringatan, dan tabel log diperbarui secara *reactive* sesuai hasil prediksi.
 
+Kode Program 4.13 menampilkan pipeline inferensi inti pada dashboard, mencakup pemuatan artefak model dan fungsi prediksi dengan pengukuran latensi presisi tinggi.
+
+> **[KODE PROGRAM 4.13 — Pipeline Inferensi Dashboard NIDS]**
+> *Sumber: `streamlit_app/app.py`*
+
+```
+ 1  @st.cache_resource
+ 2  def load_scaler():
+ 3      if SCALER_PATH.exists():
+ 4          return joblib.load(SCALER_PATH)
+ 5      return None
+ 6
+ 7  class InferenceEngine:
+ 8      def load_model(self, filename):
+ 9          path = MODELS_DIR / filename
+10          self.model = xgb.XGBClassifier()
+11          self.model.load_model(str(path))
+12
+13      def predict(self, data):
+14          t0 = time.perf_counter_ns()
+15          probs = self.model.predict_proba(data)[0]
+16          t1 = time.perf_counter_ns()
+17
+18          idx = int(np.argmax(probs))
+19          label = LABEL_MAP.get(idx, "Unknown")
+20          confidence = float(probs[idx])
+21          latency_ms = (t1 - t0) / 1e6
+22          return idx, label, confidence, latency_ms
+23
+24  def prepare_features(row_df):
+25      features = row_df.drop(columns=["Label_True"], errors="ignore")
+26      if EXPECTED_FEATURES:
+27          features = features[EXPECTED_FEATURES]
+28      return features.values
+```
+
 Detail komponen antarmuka didokumentasikan pada Tabel 4.29 dan 4.30.
 
 > **[TABEL 4.29 — Komponen Panel Kontrol (Sidebar)]**
@@ -775,6 +1127,40 @@ Ekspektasi pengujian pada skenario baseline:
 
 Skenario injection merupakan pengujian inti yang menggunakan dataset lengkap — termasuk sampel serangan DoS, Probe, dan Malware — untuk mengevaluasi **kemampuan deteksi** dan **responsivitas** model terhadap ancaman.
 
+Kode Program 4.14 menampilkan logika inti simulasi loop pada dashboard, mencakup akuisisi data, inferensi, dan klasifikasi event (TP/TN/FP/FN).
+
+> **[KODE PROGRAM 4.14 — Simulasi Loop & Klasifikasi Event]**
+> *Sumber: `streamlit_app/app.py`*
+
+```
+ 1  row_data = stream.iloc[[st.session_state.idx]]
+ 2  true_label_idx = int(row_data["Label_True"].iloc[0])
+ 3  true_label = LABEL_MAP.get(true_label_idx, "Unknown")
+ 4
+ 5  input_data = prepare_features(row_data)
+ 6  pred_idx, pred_label, conf, lat = st.session_state.engine.predict(input_data)
+ 7  st.session_state.latency_history.append(lat)
+ 8
+ 9  is_true_attack = true_label_idx > 0
+10  is_pred_attack = pred_idx > 0
+11
+12  if is_pred_attack and is_true_attack:
+13      event_type = "tp"
+14      st.session_state.tp_count += 1
+15  elif not is_pred_attack and not is_true_attack:
+16      event_type = "tn"
+17      st.session_state.tn_count += 1
+18  elif is_pred_attack and not is_true_attack:
+19      event_type = "fp"
+20      st.session_state.fp_count += 1
+21  elif not is_pred_attack and is_true_attack:
+22      event_type = "fn"
+23      st.session_state.fn_count += 1
+24
+25  if auto_stop and is_pred_attack:
+26      st.session_state.run = False
+```
+
 > **[GAMBAR 4.24 — Screenshot Dashboard saat Serangan Terdeteksi (True Positive)]**
 > *Deskripsi: Screenshot yang menangkap momen deteksi serangan — indikator berubah merah (🚨 Attack), kartu alert merah muncul menandakan True Positive, confidence score dan label prediksi ditampilkan, serta baris tabel log berwarna merah mengidentifikasi paket serangan. Ambil screenshot dari aplikasi Streamlit.*
 
@@ -833,6 +1219,25 @@ Ekspektasi pengujian pada skenario injection:
 | 30 | Tabel 4.30 | Komponen Area Dashboard Utama |
 | 31 | Tabel 4.31 | Katalog Model pada Dashboard |
 
+### Daftar Kode Program
+
+| No. | Nomor | Judul Kode Program | Sumber |
+|---|---|---|---|
+| 1 | Kode Program 4.1 | Konfigurasi Lingkungan & Verifikasi GPU | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 1 |
+| 2 | Kode Program 4.2 | Pemuatan Dataset & Pemetaan Kelas | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 2 |
+| 3 | Kode Program 4.3 | Pembersihan Kolom & Penanganan NaN/Infinity | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 |
+| 4 | Kode Program 4.4 | Standardisasi & Pembagian Data | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 |
+| 5 | Kode Program 4.5 | Perhitungan Bobot Hybrid Cost-Sensitive | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 |
+| 6 | Kode Program 4.6 | Fungsi Objective Multi-Objective | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 4 |
+| 7 | Kode Program 4.7 | Konfigurasi & Eksekusi Optimasi Optuna | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 5 |
+| 8 | Kode Program 4.8 | Evaluasi Final & Retrain Model Terbaik | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 8 |
+| 9 | Kode Program 4.9 | Cohen's Kappa & Analisis Pola Kesalahan | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 10B |
+| 10 | Kode Program 4.10 | Cross-Validation & Uji Kruskal-Wallis | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 16 |
+| 11 | Kode Program 4.11 | Hyperparameter Importance (Surrogate RF) | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 11 |
+| 12 | Kode Program 4.12 | Feature Importance XGBoost (Gain) | `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 13 |
+| 13 | Kode Program 4.13 | Pipeline Inferensi Dashboard NIDS | `streamlit_app/app.py` |
+| 14 | Kode Program 4.14 | Simulasi Loop & Klasifikasi Event | `streamlit_app/app.py` |
+
 ### Daftar Gambar
 
 | No. | Nomor | Judul Gambar | File Referensi |
@@ -868,6 +1273,7 @@ Ekspektasi pengujian pada skenario injection:
 > **Catatan untuk pemindahan ke Word:**
 > - Semua teks dalam blok `> **[TABEL X.X — ...]**` menandai posisi di mana tabel harus disisipkan di dokumen Word.
 > - Semua teks dalam blok `> **[GAMBAR X.X — ...]**` menandai posisi di mana gambar harus disisipkan beserta caption-nya.
+> - Semua teks dalam blok `> **[KODE PROGRAM X.X — ...]**` menandai posisi di mana potongan kode program harus disisipkan. Nomor baris pada kode berfungsi sebagai referensi penjelasan.
 > - Setiap tabel dan gambar telah dilengkapi paragraf deskripsi/penjelasan di bawahnya yang menjelaskan isi, signifikansi, dan interpretasi.
 > - File PNG referensi tersedia di arsip output notebook (`ARSIP_LENGKAP_SKRIPSI_20260212_0748.zip`, ukuran 189,29 MB).
 > - Gambar 4.22–4.25 perlu diambil secara manual sebagai screenshot dari aplikasi Streamlit yang telah di-deploy.
