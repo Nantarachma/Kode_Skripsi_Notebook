@@ -200,7 +200,7 @@ Tabel 4.6 memuat 49 fitur yang secara komprehensif merepresentasikan berbagai as
 Kode Program 4.3 menampilkan proses pembersihan kolom identitas, penanganan nilai NaN dan infinity, serta validasi kebersihan data.
 
 > **[KODE PROGRAM 4.3 — Pembersihan Kolom & Penanganan NaN/Infinity]**
-> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3*
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian pembersihan)*
 
 ```
  1  cols_to_drop = [
@@ -264,7 +264,7 @@ Tabel 4.8 mendokumentasikan langkah standardisasi yang diterapkan. StandardScale
 Kode Program 4.4 menampilkan proses standardisasi fitur dan pembagian data menjadi subset training dan validasi.
 
 > **[KODE PROGRAM 4.4 — Standardisasi & Pembagian Data]**
-> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3*
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian standardisasi)*
 
 ```
  1  scaler = StandardScaler()
@@ -322,7 +322,7 @@ Statistik ringkasan bobot mengkonfirmasi kewajaran distribusi:
 Kode Program 4.5 menampilkan implementasi strategi *Hybrid Cost-Sensitive Weighting* yang terdiri dari tiga langkah berurutan.
 
 > **[KODE PROGRAM 4.5 — Perhitungan Bobot Hybrid Cost-Sensitive]**
-> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3*
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 3 (bagian pembobotan)*
 
 ```
 1  raw_weights = compute_sample_weight(class_weight='balanced', y=y_train)
@@ -415,7 +415,7 @@ Kode Program 4.6 menampilkan definisi fungsi objective multi-objective yang digu
 Kode Program 4.7 menampilkan konfigurasi dan eksekusi optimasi menggunakan tiga metode sampling Optuna secara berurutan.
 
 > **[KODE PROGRAM 4.7 — Konfigurasi & Eksekusi Optimasi Optuna]**
-> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 5.0 & 5.2*
+> *Sumber: `kode-skripsi-nf-unsw-nb15-v3 (15).ipynb` — Cell 5.0 dan Cell 5.2*
 
 ```
  1  N_TRIALS = 30
