@@ -440,6 +440,6 @@ Sebagai rekomendasi untuk penelitian mendatang: (1) perbandingan efisiensi TPE d
 > - Semua angka menggunakan format desimal Indonesia (koma sebagai pemisah desimal).
 > - Tabel menggunakan penomoran Romawi (Tabel I, II, III, ...) dan gambar menggunakan Gbr. 1, 2, 3, ...
 > - **Angka TPE-Optimized** (Tabel VI kolom "XGBoost TPE-Optimized", Tabel VII, Tabel IX, Tabel X, Tabel XI) merupakan data faktual dari eksperimen skripsi (Trial #26, Test Set).
-> - **Angka Default XGBoost** (Tabel VI kolom "XGBoost Default", Tabel VIII) dan **Statistik Konvergensi TPE** (Tabel XII, kolom bertanda —*) diperoleh dengan menjalankan `Prosiding_Santika_2026_Default_vs_Optimized_XGBoost.py`. **Ganti nilai —* dengan nilai aktual hasil eksekusi script sebelum pengiriman artikel.**
+> - **Angka Default XGBoost** (Tabel VI kolom "XGBoost Default", Tabel VIII) dan **Statistik Konvergensi TPE** (Tabel XII, baris bertanda —*) diperoleh dengan menjalankan `Prosiding_Santika_2026_Default_vs_Optimized_XGBoost.py`. **Ganti nilai —* dengan nilai aktual hasil eksekusi script sebelum pengiriman artikel.**
 > - Latensi inferensi (Tabel XIII) diukur menggunakan `time.perf_counter` dengan warm-up 100 sampel; nilai aktual dapat bervariasi sesuai hardware yang digunakan.
 > - **Gbr. 3** (Trajektori Konvergensi TPE) dihasilkan oleh script sebagai `tpe_convergence_f1.png`.

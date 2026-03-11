@@ -526,33 +526,36 @@ for t in study_tpe.trials:
         current_best = max(current_best, t.value)
         best_so_far.append(current_best)
 
-print(f"Trial pertama F1  : {trial_f1_values[0]:.4f}")
-print(f"Trial terbaik F1  : {max(trial_f1_values):.4f} (Trial #{study_tpe.best_trial.number + 1})")
-print(f"Trial terburuk F1 : {min(trial_f1_values):.4f}")
-print(f"Mean F1 semua trial: {np.mean(trial_f1_values):.4f}")
-print(f"Std F1 semua trial : {np.std(trial_f1_values):.4f}")
-print(f"Rentang F1         : {max(trial_f1_values) - min(trial_f1_values):.4f}")
+if not trial_f1_values:
+    print("⚠️  Tidak ada trial yang berhasil — lewati analisis konvergensi")
+else:
+    print(f"Trial pertama F1  : {trial_f1_values[0]:.4f}")
+    print(f"Trial terbaik F1  : {max(trial_f1_values):.4f} (Trial #{study_tpe.best_trial.number + 1})")
+    print(f"Trial terburuk F1 : {min(trial_f1_values):.4f}")
+    print(f"Mean F1 semua trial: {np.mean(trial_f1_values):.4f}")
+    print(f"Std F1 semua trial : {np.std(trial_f1_values):.4f}")
+    print(f"Rentang F1         : {max(trial_f1_values) - min(trial_f1_values):.4f}")
 
-# ── Convergence Plot ──────────────────────────────────────────────────────────
-fig, ax = plt.subplots(figsize=(10, 5))
-ax.scatter(trial_numbers, trial_f1_values, c='steelblue', alpha=0.7,
-           s=50, zorder=3, label='F1 per Trial')
-ax.plot(trial_numbers, best_so_far, c='crimson', linewidth=2,
-        zorder=4, label='Best-so-far')
-ax.axhline(y=val_f1_default, color='gray', linestyle='--', linewidth=1,
-           label=f'Default F1 = {val_f1_default:.4f}')
-ax.set_xlabel('Nomor Trial', fontsize=11)
-ax.set_ylabel('Macro F1-Score (Validasi)', fontsize=11)
-ax.set_title('Konvergensi Optimasi TPE — Macro F1-Score\n'
-             f'30 Trial, Best = {max(trial_f1_values):.4f} '
-             f'(Trial #{study_tpe.best_trial.number + 1})',
-             fontsize=12)
-ax.legend(loc='lower right')
-ax.grid(True, alpha=0.3)
-plt.tight_layout()
-plt.savefig('tpe_convergence_f1.png', dpi=150, bbox_inches='tight')
-plt.close()
-print("\n✅ Convergence chart disimpan: tpe_convergence_f1.png")
+    # ── Convergence Plot ──────────────────────────────────────────────────────────
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.scatter(trial_numbers, trial_f1_values, c='steelblue', alpha=0.7,
+               s=50, zorder=3, label='F1 per Trial')
+    ax.plot(trial_numbers, best_so_far, c='crimson', linewidth=2,
+            zorder=4, label='Best-so-far')
+    ax.axhline(y=val_f1_default, color='gray', linestyle='--', linewidth=1,
+               label=f'Default F1 = {val_f1_default:.4f}')
+    ax.set_xlabel('Nomor Trial', fontsize=11)
+    ax.set_ylabel('Macro F1-Score (Validasi)', fontsize=11)
+    ax.set_title('Konvergensi Optimasi TPE — Macro F1-Score\n'
+                 f'30 Trial, Best = {max(trial_f1_values):.4f} '
+                 f'(Trial #{study_tpe.best_trial.number + 1})',
+                 fontsize=12)
+    ax.legend(loc='lower right')
+    ax.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig('tpe_convergence_f1.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    print("\n✅ Convergence chart disimpan: tpe_convergence_f1.png")
 
 
 # ═══ CELL 12 ═══ Feature Importance (Gain-based, Top 20) ═══════════════════
