@@ -414,42 +414,6 @@ plt.close()
 print("✅ Confusion matrix disimpan: confusion_matrix_default_vs_optimized.png")
 
 
-# ═══ CELL 10 ═══ Latency Measurement (Metrik Evaluasi Tambahan) ═════════════
-
-print("\n" + "=" * 60)
-print("CELL 10: Latency Measurement (µs/sampel)")
-print("=" * 60)
-
-WARMUP_SAMPLES = 100
-
-def measure_latency(model, X_data, warmup_n=WARMUP_SAMPLES, n_repeat=5):
-    """Ukur latensi inferensi dalam µs/sampel menggunakan time.perf_counter."""
-    # Warm-up pass
-    _ = model.predict(X_data.iloc[:warmup_n])
-    # Pengukuran utama (rata-rata dari n_repeat)
-    times = []
-    for _ in range(n_repeat):
-        t0 = time.perf_counter()
-        model.predict(X_data)
-        t1 = time.perf_counter()
-        times.append((t1 - t0) / len(X_data) * 1_000_000)
-    return float(np.mean(times))
-
-lat_default   = measure_latency(default_model,   X_test_selected)
-lat_optimized = measure_latency(optimized_model, X_test_selected)
-
-print(f"Latensi Default XGBoost   : {lat_default:.2f} µs/sampel")
-print(f"Latensi TPE-Optimized     : {lat_optimized:.2f} µs/sampel")
-print(f"Selisih                   : {lat_optimized - lat_default:+.2f} µs/sampel")
-print(f"Rasio (Opt/Default)       : {lat_optimized / lat_default:.2f}×")
-print("\nCatatan: Latensi adalah METRIK EVALUASI TAMBAHAN,")
-print("         BUKAN bagian dari objective function optimasi.")
-
-# ── Simpan ke metrics dict ────────────────────────────────────────────────────
-metrics['Default']['latency_us']          = lat_default
-metrics['Optimized (TPE)']['latency_us']  = lat_optimized
-
-
 # ═══ CELL 11 ═══ HP Importance via Surrogate RF ═════════════════════════════
 
 print("\n" + "=" * 60)
@@ -607,8 +571,6 @@ row_data = [
                          f"{metrics['Optimized (TPE)']['accuracy']:.4f}"),
     ("Cohen's Kappa",    f"{metrics['Default']['kappa']:.4f}",
                          f"{metrics['Optimized (TPE)']['kappa']:.4f}"),
-    ("Latency (µs/sample)", f"{metrics['Default']['latency_us']:.2f}",
-                             f"{metrics['Optimized (TPE)']['latency_us']:.2f}"),
 ]
 for name, d_val, o_val in row_data:
     print("║{:<30}{:>18}{:>18}║".format("  " + name, d_val, o_val))
@@ -618,7 +580,6 @@ print("╠" + "═" * 66 + "╣")
 delta_f1  = metrics['Optimized (TPE)']['f1_macro'] - metrics['Default']['f1_macro']
 delta_acc = metrics['Optimized (TPE)']['accuracy']  - metrics['Default']['accuracy']
 delta_kap = metrics['Optimized (TPE)']['kappa']     - metrics['Default']['kappa']
-delta_lat = metrics['Optimized (TPE)']['latency_us'] - metrics['Default']['latency_us']
 
 print("║{:<30}{:>18}{:>18}║".format("  ΔF1 (Opt - Default)",
       "", f"{delta_f1:+.4f}"))
@@ -626,8 +587,6 @@ print("║{:<30}{:>18}{:>18}║".format("  ΔAccuracy",
       "", f"{delta_acc:+.4f}"))
 print("║{:<30}{:>18}{:>18}║".format("  ΔKappa",
       "", f"{delta_kap:+.4f}"))
-print("║{:<30}{:>18}{:>18}║".format("  ΔLatency (µs)",
-      "", f"{delta_lat:+.2f}"))
 print("╚" + "═" * 66 + "╝")
 
 # ── Parameter comparison ──────────────────────────────────────────────────────

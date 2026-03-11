@@ -56,7 +56,7 @@ Dataset NF-UNSW-NB15-v3 merupakan versi *NetFlow* dari UNSW-NB15 yang dikonversi
 
 ### D. Metrik Evaluasi
 
-*Macro F1-Score* dihitung sebagai rata-rata tidak berbobot F1-Score seluruh kelas, sehingga memberikan bobot yang sama untuk setiap kelas terlepas dari ukurannya. Metrik ini cocok untuk dataset tidak seimbang karena meminimalkan bias terhadap kelas mayoritas. *Cohen's Kappa* ($\kappa$) mengukur reliabilitas klasifikasi dengan memperhitungkan kesepakatan yang terjadi secara kebetulan, memberikan evaluasi yang lebih konservatif dibandingkan akurasi pada dataset tidak seimbang [11]. Latensi inferensi (µs/sampel) diukur sebagai metrik evaluasi tambahan menggunakan `time.perf_counter` dengan *warm-up* 100 sampel.
+*Macro F1-Score* dihitung sebagai rata-rata tidak berbobot F1-Score seluruh kelas, sehingga memberikan bobot yang sama untuk setiap kelas terlepas dari ukurannya. Metrik ini cocok untuk dataset tidak seimbang karena meminimalkan bias terhadap kelas mayoritas. *Cohen's Kappa* ($\kappa$) mengukur reliabilitas klasifikasi dengan memperhitungkan kesepakatan yang terjadi secara kebetulan, memberikan evaluasi yang lebih konservatif dibandingkan akurasi pada dataset tidak seimbang [11].
 
 ---
 
@@ -169,7 +169,7 @@ Default XGBoost         TPE Optimization (30 Trial)
           ↓
   Evaluasi Komparatif pada Test Set
   (F1, Accuracy, Kappa, Classification Report,
-   Confusion Matrix, Latency sebagai Metrik Tambahan)
+   Confusion Matrix)
           ↓
   Interpretasi Model
   (HP Importance via Surrogate RF, Feature Importance Gain)
@@ -217,9 +217,6 @@ Perbandingan kinerja komprehensif antara XGBoost default dan XGBoost yang diopti
 | Macro F1-Score | 0,8116 | **0,8629** | **+0,0513 (+6,33%)** |
 | Accuracy | 0,9916 | **0,9926** | +0,0010 |
 | Cohen's Kappa | 0,9188 | **0,9287** | +0,0099 |
-| Latensi (µs/sampel)* | 0,45 | 2,23 | +1,78 |
-
-*\*Latensi diukur sebagai metrik evaluasi tambahan, bukan bagian dari fungsi objektif optimasi.*
 
 Tabel VI menunjukkan bahwa optimasi TPE menghasilkan peningkatan *Macro F1-Score* sebesar 0,0513 poin (6,33%) dibandingkan model default. Peningkatan *Cohen's Kappa* sebesar 0,0099 poin — dari 0,9188 ke 0,9287 — mengkonfirmasi peningkatan reliabilitas klasifikasi yang konsisten. Keduanya tergolong dalam kategori *"Almost Perfect Agreement"* (κ > 0,81), namun model optimized berada lebih jauh dari batas kategori tersebut.
 
@@ -367,22 +364,6 @@ Proses konvergensi menunjukkan dua fase yang khas dari algoritma Bayesian TPE:
 
 Temuan ini menunjukkan bahwa 30 trial Bayesian TPE sudah memadai untuk menghasilkan konfigurasi yang secara signifikan mengungguli parameter default (+0,0513 F1 pada test set), meskipun ruang pencarian mencakup 10 hiperparameter. Efisiensi ini merupakan keunggulan konkret pendekatan Bayesian yang membangun *surrogate model* probabilistik, dibandingkan pencarian acak (*random search*) yang tidak memanfaatkan informasi trial sebelumnya [14].
 
-### F. Latensi Inferensi sebagai Metrik Evaluasi Tambahan
-
-Latensi inferensi diukur menggunakan `time.perf_counter` dengan *warm-up* 100 sampel dan rata-rata dari 5 pengulangan. Hasil pengukuran ditampilkan pada Tabel XIII.
-
-**Tabel XIII. Latensi Inferensi (Metrik Evaluasi Tambahan)**
-
-| Model | Latensi (µs/sampel) | n_estimators | max_depth |
-|-------|---------------------|--------------|-----------|
-| XGBoost Default | 0,45 | 100 | 6 |
-| XGBoost TPE-Optimized | 2,23 | 600 | 10 |
-| Selisih | +1,78 | +500 | +4 |
-
-Model TPE-Optimized memiliki latensi 2,23 µs/sampel, sekitar 4,96× lebih lambat dibandingkan model default (0,45 µs). Peningkatan latensi ini merupakan konsekuensi langsung dari konfigurasi optimal yang menggunakan lebih banyak pohon (600 vs 100) dengan kedalaman lebih besar (10 vs 6). Kompleksitas inferensi XGBoost bersifat linear terhadap jumlah estimator dan kedalaman pohon, sehingga peningkatan 6× pada `n_estimators` secara langsung meningkatkan waktu prediksi.
-
-Perlu ditekankan bahwa latensi 2,23 µs/sampel tetap berada pada skala mikro-detik yang jauh di bawah ambang batas operasional sistem NIDS *real-time* (umumnya < 1 ms). Dalam konteks skenario operasional, trade-off peningkatan F1 sebesar 0,0513 (6,33%) dengan peningkatan latensi 1,78 µs adalah pertukaran yang menguntungkan, karena kualitas deteksi yang lebih baik memiliki nilai keamanan yang jauh lebih tinggi.
-
 ---
 
 ## V. Kesimpulan
@@ -441,5 +422,4 @@ Sebagai rekomendasi untuk penelitian mendatang: (1) perbandingan efisiensi TPE d
 > - Tabel menggunakan penomoran Romawi (Tabel I, II, III, ...) dan gambar menggunakan Gbr. 1, 2, 3, ...
 > - **Angka TPE-Optimized** (Tabel VI kolom "XGBoost TPE-Optimized", Tabel VII, Tabel IX, Tabel X, Tabel XI) merupakan data faktual dari eksperimen skripsi (Trial #26, Test Set).
 > - **Angka Default XGBoost** (Tabel VI kolom "XGBoost Default", Tabel VIII) dan **Statistik Konvergensi TPE** (Tabel XII, baris bertanda —*) diperoleh dengan menjalankan `Prosiding_Santika_2026_Default_vs_Optimized_XGBoost.py`. **Ganti nilai —* dengan nilai aktual hasil eksekusi script sebelum pengiriman artikel.**
-> - Latensi inferensi (Tabel XIII) diukur menggunakan `time.perf_counter` dengan warm-up 100 sampel; nilai aktual dapat bervariasi sesuai hardware yang digunakan.
 > - **Gbr. 3** (Trajektori Konvergensi TPE) dihasilkan oleh script sebagai `tpe_convergence_f1.png`.
