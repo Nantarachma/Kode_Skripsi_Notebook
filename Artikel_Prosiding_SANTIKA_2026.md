@@ -90,19 +90,11 @@ Evaluasi Komparatif (Test Set)
 & Analisis Interpretabilitas
 ```
 
-### B. Dataset dan Pra-pemrosesan
+### B. Persiapan Data
 
-Dataset NF-UNSW-NB15-v3 dimuat dari repositori Kaggle dengan 2.365.424 rekaman dan 54 kolom awal [4]. Sepuluh kategori serangan asli dipetakan ke empat kelas: Normal (Benign, 94,60%), DoS (DoS & Generic, 1,08%), Probe (Reconnaissance & Analysis, 0,77%), dan Malware (Exploits, Fuzzers, Backdoor, Shellcode, Worms, 3,54%). Ketidakseimbangan kelas yang ekstrem dengan rasio 122,28:1 antara kelas Normal dan Probe merupakan tantangan utama.
+Dataset NF-UNSW-NB15-v3 [4] dimuat dengan 2.365.424 rekaman dan 54 kolom. Sepuluh kategori serangan asli dipetakan ke empat kelas (Normal 94,60%, DoS 1,08%, Probe 0,77%, Malware 3,54%) dengan rasio ketidakseimbangan 122,28:1. Setelah pembersihan fitur, imputasi median, dan standardisasi Z-score, dataset dibagi secara stratifikasi menjadi *training* (64%), validasi (16%), dan *test holdout* (20%) dengan 49 fitur final. Strategi *hybrid cost-sensitive weighting* berbasis akar kuadrat diterapkan untuk menyusutkan rasio efektif ketidakseimbangan kelas menjadi sekitar 11:1.
 
-Pra-pemrosesan meliputi penghapusan lima kolom non-informatif (kolom temporal, alamat IP, dan kolom `Attack` pasca-pemetaan) sehingga diperoleh 49 fitur final, imputasi median pada 195.882 nilai hilang yang dihitung eksklusif dari data *training*, serta standardisasi Z-score menggunakan `StandardScaler` dengan pendekatan *fit-on-train, transform-on-all*.
-
-### C. Pembagian Data dan Penanganan Ketidakseimbangan
-
-Dataset dibagi secara stratifikasi menjadi data *training* (1.513.871 sampel, 64%), validasi (378.468, 16%), dan *test holdout* (473.085, 20%). Data *test* tidak digunakan selama proses optimasi untuk menjamin evaluasi generalisasi yang objektif.
-
-Untuk mengatasi ketidakseimbangan kelas, diterapkan strategi *hybrid cost-sensitive weighting*: bobot dasar dihitung menggunakan `compute_sample_weight('balanced')`, ditransformasi dengan akar kuadrat untuk meredam penalti ekstrem, lalu dinormalisasi agar rata-rata bobot sama dengan 1,0. Strategi ini menyusutkan rasio efektif dari 122,28:1 menjadi sekitar 11:1 tanpa menghapus informasi prevalensi kelas.
-
-### D. Konfigurasi Eksperimen
+### C. Konfigurasi Eksperimen
 
 Penelitian ini membandingkan dua skenario. **Skenario 1 (XGBoost Default):** model dilatih dengan 10 parameter bawaan standar XGBoost (misalnya `n_estimators`=100, `learning_rate`=0,3, `max_depth`=6) tanpa optimasi. **Skenario 2 (XGBoost TPE-Optimized):** model dioptimasi menggunakan TPE melalui *framework* Optuna dengan *single-objective* memaksimalkan *Macro F1-Score* validasi selama 30 trial. Ruang pencarian mencakup 10 hiperparameter sebagaimana ditampilkan pada Tabel I.
 
@@ -123,7 +115,7 @@ Penelitian ini membandingkan dua skenario. **Skenario 1 (XGBoost Default):** mod
 
 Model terbaik diambil melalui `study.best_trial` setelah 30 trial selesai [5], [6].
 
-### E. Analisis Interpretabilitas dan Konvergensi
+### D. Analisis Interpretabilitas dan Konvergensi
 
 Pengaruh setiap hiperparameter terhadap F1-Score dikuantifikasi menggunakan *Random Forest Regressor* sebagai *surrogate model* yang dilatih pada 30 pasangan (konfigurasi, F1). Efisiensi pencarian Bayesian diukur melalui trajektori F1-Score validasi dan *best-so-far* kumulatif untuk mengidentifikasi pola konvergensi serta fase eksplorasi-eksploitasi TPE [5].
 
