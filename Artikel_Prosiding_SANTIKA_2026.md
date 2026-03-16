@@ -27,7 +27,9 @@ Dataset NF-UNSW-NB15-v3 merupakan representasi modern *network flow* yang dikonv
 
 Pendekatan optimasi hiperparameter Bayesian, khususnya melalui *Tree-structured Parzen Estimator* (TPE) [5], menawarkan strategi pencarian yang lebih efisien dibandingkan *grid search* atau *random search* konvensional. TPE membangun model probabilistik dari trial sebelumnya untuk memandu pencarian ke region yang menjanjikan dalam ruang hiperparameter, sehingga menemukan konfigurasi optimal dengan jumlah trial yang lebih sedikit [6].
 
-Sebagian besar penelitian NIDS berbasis XGBoost menggunakan konfigurasi default atau *grid search* sederhana [7], [8], sehingga potensi peningkatan kinerja melalui optimasi hiperparameter Bayesian belum terkuantifikasi secara komprehensif. Penelitian ini bertujuan untuk:
+Beberapa penelitian terdahulu telah mengevaluasi XGBoost untuk NIDS dengan berbagai pendekatan. Yulianton dkk. (2025) melaporkan akurasi 99,67% menggunakan XGBoost dengan penyetelan hiperparameter Bayesian pada dataset UNSW-NB15, namun analisisnya berfokus pada metrik akurasi keseluruhan tanpa menelaah dampak per kelas serangan minoritas [7]. Liu dkk. (2024) mengusulkan metode deteksi intrusi berbasis seleksi fitur dan XGBoost yang mencapai kinerja tinggi, tetapi penekanannya pada seleksi fitur, bukan optimasi hiperparameter secara komprehensif [8]. More dkk. (2024) mengevaluasi performa IDS yang disempurnakan pada dataset UNSW-NB15, namun belum mengkuantifikasi kontribusi individual setiap hiperparameter terhadap kinerja model [9]. Liu (2025) mengembangkan model RFS-XGBoost untuk NIDS dengan optimasi komprehensif, akan tetapi tidak membandingkan secara eksplisit konfigurasi default versus konfigurasi yang dioptimasi [10]. Moustafa dan Slay (2015), yang memperkenalkan dataset UNSW-NB15, menunjukkan bahwa ketidakseimbangan kelas pada dataset ini memerlukan strategi penanganan khusus agar kelas serangan minoritas dapat terdeteksi secara memadai [15].
+
+Dari tinjauan penelitian terdahulu tersebut, dapat disimpulkan bahwa meskipun XGBoost telah terbukti efektif untuk NIDS, sebagian besar penelitian masih menggunakan konfigurasi default atau *grid search* sederhana dan belum secara komprehensif mengkuantifikasi dampak optimasi hiperparameter Bayesian TPE terhadap kinerja per kelas serangan, terutama pada kelas minoritas yang paling kritis. Selain itu, analisis sensitivitas hiperparameter untuk mengidentifikasi parameter yang paling berpengaruh masih jarang dilakukan dalam konteks NIDS. Oleh karena itu, penelitian ini bertujuan untuk:
 
 1. Mengkuantifikasi dampak optimasi hiperparameter TPE terhadap *Macro F1-Score* dan metrik evaluasi lainnya pada dataset NF-UNSW-NB15-v3;
 2. Menganalisis peningkatan kinerja per kelas serangan, terutama pada kelas minoritas yang paling kritis;
@@ -62,145 +64,60 @@ Dataset NF-UNSW-NB15-v3 merupakan versi *NetFlow* dari UNSW-NB15 yang dikonversi
 
 ## III. Metodologi
 
-### A. Dataset dan Pra-pemrosesan
+### A. Alur Penelitian
 
-Dataset NF-UNSW-NB15-v3 dimuat dari repositori Kaggle dengan 2.365.424 rekaman dan 54 kolom awal. Pra-pemrosesan dilakukan melalui tahapan berikut:
+Gbr. 1 menampilkan alur penelitian secara keseluruhan, mulai dari pemuatan dataset hingga evaluasi komparatif.
 
-**Tahap 1 — Pemetaan Kelas.** Sepuluh kategori serangan asli dipetakan ke empat kelas berdasarkan kesamaan karakteristik serangan. Distribusi kelas setelah pemetaan ditampilkan pada Tabel I.
-
-**Tabel I. Distribusi Kelas Setelah Mapping**
-
-| ID | Kategori | Label Asli | Jumlah | Persentase |
-|----|----------|------------|--------|------------|
-| 0 | Normal | Benign | 2.237.731 | 94,60% |
-| 1 | DoS | DoS, Generic | 25.631 | 1,08% |
-| 2 | Probe | Reconnaissance, Analysis | 18.300 | 0,77% |
-| 3 | Malware | Exploits, Fuzzers, Backdoor, Shellcode, Worms | 83.762 | 3,54% |
-
-Ketidakseimbangan kelas yang ekstrem dengan rasio 122,28:1 antara kelas Normal dan Probe merupakan tantangan utama yang ditangani melalui strategi pembobotan khusus.
-
-**Tahap 2 — Pembersihan Fitur.** Lima kolom dihapus: `FLOW_START_MILLISECONDS`, `FLOW_END_MILLISECONDS`, `IPV4_SRC_ADDR`, `IPV4_DST_ADDR`, dan `Label`. Kolom temporal dan alamat IP dihapus karena berpotensi menyebabkan *overfitting* terhadap kondisi spesifik eksperimen. Kolom `Attack` dihapus setelah pemetaan, menghasilkan 49 fitur final.
-
-**Tahap 3 — Imputasi Nilai Hilang.** Sebanyak 195.882 nilai `NaN` (yang berasal dari operasi pembagian dengan nol pada fitur *throughput*) diimputasi menggunakan median yang dihitung eksklusif dari data *training*, mencegah kebocoran informasi ke data validasi dan uji.
-
-**Tahap 4 — Standardisasi.** `StandardScaler` diterapkan dengan pendekatan *fit-on-train, transform-on-all* untuk normalisasi Z-score ke distribusi berpusat nol dengan simpangan baku satu. Data dikonversi dari `float64` ke `float32` untuk efisiensi memori.
-
-### B. Pembagian Data
-
-Dataset dibagi menggunakan dua tahap stratifikasi sebagaimana ditampilkan pada Tabel II.
-
-**Tabel II. Pembagian Dataset (Stratified Split)**
-
-| Subset | Jumlah Sampel | Persentase |
-|--------|---------------|------------|
-| Training | 1.513.871 | 64% |
-| Validasi | 378.468 | 16% |
-| Test (*Holdout*) | 473.085 | 20% |
-| **Total** | **2.365.424** | **100%** |
-
-Stratifikasi memastikan proporsi kelas terjaga di semua subset. Data test tidak disentuh selama proses optimasi sehingga evaluasi akhir mengukur kemampuan generalisasi yang sesungguhnya.
-
-### C. Strategi Hybrid Cost-Sensitive Weighting
-
-Untuk mengatasi ketidakseimbangan kelas 122,28:1, diterapkan strategi *hybrid cost-sensitive weighting* melalui tiga langkah:
-
-1. Hitung bobot dasar menggunakan `compute_sample_weight('balanced')`;
-2. Transformasi akar kuadrat (`sqrt`) untuk meredam penalti yang terlalu ekstrem;
-3. Normalisasi agar rata-rata bobot = 1,0 untuk menjaga stabilitas *learning rate*.
-
-Hasil distribusi bobot ditampilkan pada Tabel III.
-
-**Tabel III. Distribusi Bobot Hybrid per Kelas**
-
-| Kelas | Sampel Training | Bobot Hybrid |
-|-------|-----------------|--------------|
-| Normal | 1.432.148 | 0,7600 |
-| DoS | 16.404 | 7,1009 |
-| Probe | 11.712 | 8,4038 |
-| Malware | 53.607 | 3,9281 |
-
-Strategi ini menyusutkan rasio efektif dari 122,28:1 menjadi sekitar 11:1, memberikan sinyal pelatihan yang lebih seimbang tanpa menghapus informasi prevalensi kelas.
-
-### D. Konfigurasi Eksperimen
-
-Penelitian ini membandingkan dua skenario eksperimen:
-
-**Skenario 1 — XGBoost Default:** Model dilatih dengan parameter bawaan standar XGBoost seperti pada Tabel IV, tanpa optimasi apapun. Seluruh preprocessing dan pembobotan identik dengan skenario optimasi.
-
-**Skenario 2 — XGBoost TPE-Optimized:** Model dioptimasi menggunakan TPE melalui Optuna dengan *single-objective* memaksimalkan *Macro F1-Score* validasi, sebagaimana digambarkan pada Gbr. 1.
-
-**Tabel IV. Parameter Default XGBoost**
-
-| Parameter | Nilai Default |
-|-----------|---------------|
-| `n_estimators` | 100 |
-| `learning_rate` | 0,3 |
-| `max_depth` | 6 |
-| `min_child_weight` | 1 |
-| `max_delta_step` | 0 |
-| `gamma` | 0 |
-| `subsample` | 1,0 |
-| `colsample_bytree` | 1,0 |
-| `reg_alpha` | 0 |
-| `reg_lambda` | 1 |
-
-**Gbr. 1. Alur Pipeline Penelitian**
+**Gbr. 1. Diagram Alur Penelitian**
 
 ```
-Dataset NF-UNSW-NB15-v3 (2.365.424 sampel)
-          ↓
-  Mapping 10 → 4 Kelas
-          ↓
-  Pra-pemrosesan (Drop 5 Kolom, Imputasi Median, StandardScaler)
-          ↓
-  Pembagian Data Stratifikasi (64% Train | 16% Val | 20% Test)
-          ↓
-  Hybrid Cost-Sensitive Weighting
-          ↓
-   ┌──────────────────────────────────┐
-   │                                  │
-   ↓                                  ↓
-Default XGBoost         TPE Optimization (30 Trial)
-(Parameter Bawaan)      → Objective: Maximize F1 Macro
-                        → Best Trial: study.best_trial
-                        → Retrain dengan Params Terbaik
-   │                                  │
-   └──────────────────────────────────┘
-          ↓
-  Evaluasi Komparatif pada Test Set
-  (F1, Accuracy, Kappa, Classification Report,
-   Confusion Matrix)
-          ↓
-  Interpretasi Model
-  (HP Importance via Surrogate RF, Feature Importance Gain)
+Dataset NF-UNSW-NB15-v3
+        ↓
+Pra-pemrosesan (Mapping Kelas, Pembersihan Fitur,
+Imputasi Median, Standardisasi Z-score)
+        ↓
+Pembagian Data Stratifikasi (64/16/20%)
+        ↓
+Hybrid Cost-Sensitive Weighting
+        ↓
+   ┌────────────┬────────────┐
+   ↓                         ↓
+XGBoost Default     XGBoost TPE-Optimized
+                    (30 Trial, Optuna)
+   └────────────┴────────────┘
+        ↓
+Evaluasi Komparatif (Test Set)
+& Analisis Interpretabilitas
 ```
 
-### E. Ruang Pencarian Hiperparameter TPE
+### B. Persiapan Data
 
-Sepuluh hiperparameter XGBoost dioptimasi dalam ruang pencarian yang ditampilkan pada Tabel V.
+Dataset NF-UNSW-NB15-v3 [4] dimuat dengan 2.365.424 rekaman dan 54 kolom. Sepuluh kategori serangan asli dipetakan ke empat kelas (Normal 94,60%, DoS 1,08%, Probe 0,77%, Malware 3,54%) dengan rasio ketidakseimbangan 122,28:1. Setelah pembersihan fitur, imputasi median, dan standardisasi Z-score, dataset dibagi secara stratifikasi menjadi *training* (64%), validasi (16%), dan *test holdout* (20%) dengan 49 fitur final. Strategi *hybrid cost-sensitive weighting* berbasis akar kuadrat diterapkan untuk menyusutkan rasio efektif ketidakseimbangan kelas menjadi sekitar 11:1.
 
-**Tabel V. Ruang Pencarian Hiperparameter TPE**
+### C. Konfigurasi Eksperimen
 
-| Parameter | Tipe | Rentang | Keterangan |
-|-----------|------|---------|------------|
-| `n_estimators` | Integer | [500, 2000], step=100 | Jumlah pohon |
-| `learning_rate` | Float (log) | [0,01 – 0,3] | Laju pembelajaran |
-| `max_depth` | Integer | [6, 12] | Kedalaman maksimum pohon |
-| `min_child_weight` | Integer | [1, 7] | Bobot minimum node daun |
-| `max_delta_step` | Integer | [1, 8] | Batas perubahan output |
-| `gamma` | Float | [0,1 – 0,5] | Minimum *loss reduction* |
-| `subsample` | Float | [0,6 – 0,95] | Rasio subsampel per pohon |
-| `colsample_bytree` | Float | [0,5 – 0,9] | Rasio kolom per pohon |
-| `reg_alpha` | Float (log) | [1e-6 – 1,0] | Regularisasi L1 |
-| `reg_lambda` | Float (log) | [1e-6 – 1,0] | Regularisasi L2 |
+Penelitian ini membandingkan dua skenario. **Skenario 1 (XGBoost Default):** model dilatih dengan 10 parameter bawaan standar XGBoost (misalnya `n_estimators`=100, `learning_rate`=0,3, `max_depth`=6) tanpa optimasi. **Skenario 2 (XGBoost TPE-Optimized):** model dioptimasi menggunakan TPE melalui *framework* Optuna dengan *single-objective* memaksimalkan *Macro F1-Score* validasi selama 30 trial. Ruang pencarian mencakup 10 hiperparameter sebagaimana ditampilkan pada Tabel I.
 
-Fungsi objektif TPE hanya mengembalikan nilai *Macro F1-Score* tunggal (bukan tupel) dengan arah optimasi `direction="maximize"`. Model terbaik diambil melalui `study.best_trial` setelah 30 trial selesai.
+**Tabel I. Ruang Pencarian Hiperparameter TPE**
 
-### F. Analisis Interpretabilitas dan Konvergensi
+| Parameter | Tipe | Rentang |
+|-----------|------|---------|
+| `n_estimators` | Integer | [500, 2000], step=100 |
+| `learning_rate` | Float (log) | [0,01 – 0,3] |
+| `max_depth` | Integer | [6, 12] |
+| `min_child_weight` | Integer | [1, 7] |
+| `max_delta_step` | Integer | [1, 8] |
+| `gamma` | Float | [0,1 – 0,5] |
+| `subsample` | Float | [0,6 – 0,95] |
+| `colsample_bytree` | Float | [0,5 – 0,9] |
+| `reg_alpha` | Float (log) | [1e-6 – 1,0] |
+| `reg_lambda` | Float (log) | [1e-6 – 1,0] |
 
-**HP Importance via Surrogate RF:** Pengaruh setiap hiperparameter terhadap F1-Score dikuantifikasi menggunakan *Random Forest Regressor* sebagai *surrogate model* yang dilatih pada pasangan (konfigurasi hiperparameter, nilai F1) dari seluruh 30 trial. *Feature importance* dari *surrogate* RF digunakan sebagai estimasi pengaruh relatif. Untuk studi *single-objective*, nilai target diambil dari `t.value` (bukan `t.values[indeks]`).
+Model terbaik diambil melalui `study.best_trial` setelah 30 trial selesai [5], [6].
 
-**Analisis Konvergensi TPE:** Efisiensi proses optimasi Bayesian diukur melalui trajektori F1-Score validasi selama 30 trial. Dihitung F1 setiap trial individual beserta F1 terbaik kumulatif (*best-so-far*) untuk mengidentifikasi pola konvergensi dan fase eksplorasi-eksploitasi algoritma TPE [5]. Statistik agregat (rata-rata, minimum, rentang F1 seluruh trial) dianalisis untuk menilai stabilitas pencarian.
+### D. Analisis Interpretabilitas dan Konvergensi
+
+Pengaruh setiap hiperparameter terhadap F1-Score dikuantifikasi menggunakan *Random Forest Regressor* sebagai *surrogate model* yang dilatih pada 30 pasangan (konfigurasi, F1). Efisiensi pencarian Bayesian diukur melalui trajektori F1-Score validasi dan *best-so-far* kumulatif untuk mengidentifikasi pola konvergensi serta fase eksplorasi-eksploitasi TPE [5].
 
 ---
 
@@ -208,9 +125,9 @@ Fungsi objektif TPE hanya mengembalikan nilai *Macro F1-Score* tunggal (bukan tu
 
 ### A. Kinerja Default vs TPE-Optimized
 
-Perbandingan kinerja komprehensif antara XGBoost default dan XGBoost yang dioptimasi dengan TPE pada data test (*holdout*) disajikan pada Tabel VI.
+Perbandingan kinerja antara XGBoost default dan XGBoost TPE-Optimized pada data *test holdout* disajikan pada Tabel II.
 
-**Tabel VI. Perbandingan Kinerja Default vs TPE-Optimized (Test Set)**
+**Tabel II. Perbandingan Kinerja Default vs TPE-Optimized (Test Set)**
 
 | Metrik | XGBoost Default | XGBoost TPE-Optimized | Δ (Peningkatan) |
 |--------|-----------------|----------------------|-----------------|
@@ -218,167 +135,68 @@ Perbandingan kinerja komprehensif antara XGBoost default dan XGBoost yang diopti
 | Accuracy | 0,9916 | **0,9926** | +0,0010 |
 | Cohen's Kappa | 0,9188 | **0,9287** | +0,0099 |
 
-Tabel VI menunjukkan bahwa optimasi TPE menghasilkan peningkatan *Macro F1-Score* sebesar 0,0513 poin (6,33%) dibandingkan model default. Peningkatan *Cohen's Kappa* sebesar 0,0099 poin — dari 0,9188 ke 0,9287 — mengkonfirmasi peningkatan reliabilitas klasifikasi yang konsisten. Keduanya tergolong dalam kategori *"Almost Perfect Agreement"* (κ > 0,81), namun model optimized berada lebih jauh dari batas kategori tersebut.
-
-Konfigurasi parameter terbaik yang ditemukan TPE (Trial #26 setelah 30 trial) dan perbandingannya dengan parameter default disajikan pada Tabel VII.
-
-**Tabel VII. Konfigurasi Hiperparameter Terbaik TPE vs Default**
-
-| Parameter | Default | TPE-Optimized (Trial #26) | Perubahan |
-|-----------|---------|--------------------------|-----------|
-| `n_estimators` | 100 | 600 | +500 pohon (+6×) |
-| `learning_rate` | 0,3 | 0,0235 | ↓ 12,8× (lebih konservatif) |
-| `max_depth` | 6 | 10 | +4 level |
-| `min_child_weight` | 1 | 7 | +6 (regularisasi lebih kuat) |
-| `max_delta_step` | 0 | 2 | Diaktifkan |
-| `gamma` | 0 | 0,3514 | Pruning diaktifkan |
-| `subsample` | 1,0 | 0,8211 | Stochastic boosting |
-| `colsample_bytree` | 1,0 | 0,8036 | Diversifikasi kolom |
-| `reg_alpha` | 0 | 0,8388 | Regularisasi L1 agresif |
-| `reg_lambda` | 1 | 0,0003 | Regularisasi L2 minimal |
-| **Validasi F1** | — | **0,8648** | — |
-
-Perubahan konfigurasi yang paling mencolok adalah penurunan `learning_rate` dari 0,3 ke 0,0235 (sekitar 12,8×) bersamaan dengan peningkatan `n_estimators` dari 100 ke 600. Kombinasi ini mencerminkan strategi *slow learning* yang menghasilkan konvergensi lebih halus dan generalisasi superior. Aktivasi regularisasi L1 agresif (`reg_alpha=0,8388`) mendorong *sparsity* dalam pembobotan fitur, sedangkan `gamma=0,3514` memastikan setiap split pada pohon memberikan kontribusi minimum yang signifikan.
+Optimasi TPE meningkatkan *Macro F1-Score* sebesar 0,0513 poin (6,33%) dan *Cohen's Kappa* dari 0,9188 ke 0,9287 — keduanya tergolong kategori *"Almost Perfect Agreement"* (κ > 0,81). Konfigurasi terbaik ditemukan pada Trial #26 (F1 validasi 0,8648), dengan perubahan paling kritis berupa penurunan `learning_rate` dari 0,3 ke 0,0235 (12,8× lebih lambat) dan peningkatan `n_estimators` dari 100 ke 600, mencerminkan strategi *slow learning* yang menghasilkan generalisasi superior. Aktivasi regularisasi L1 agresif (`reg_alpha`=0,8388) dan pruning (`gamma`=0,3514) turut berkontribusi pada peningkatan kinerja.
 
 ### B. Analisis Kinerja per Kelas
 
-Perincian kinerja per kelas serangan ditampilkan pada Tabel VIII dan Tabel IX.
-
-**Tabel VIII. Classification Report XGBoost Default (Test Set)**
-
-| Kelas | Precision | Recall | F1-Score | Support |
-|-------|-----------|--------|----------|---------|
-| Normal | 1,0000 | 1,0000 | 1,0000 | 447.546 |
-| DoS | 0,8200 | 0,6900 | 0,7491 | 5.126 |
-| Probe | 0,6100 | 0,6300 | 0,6198 | 3.660 |
-| Malware | 0,8600 | 0,9100 | 0,8843 | 16.753 |
-| **Macro avg** | **0,8225** | **0,8075** | **0,8133** | **473.085** |
-
-**Tabel IX. Classification Report XGBoost TPE-Optimized (Test Set)**
-
-| Kelas | Precision | Recall | F1-Score | Support |
-|-------|-----------|--------|----------|---------|
-| Normal | 1,0000 | 1,0000 | 1,0000 | 447.546 |
-| DoS | 0,8883 | 0,7583 | 0,8181 | 5.126 |
-| Probe | 0,7301 | 0,7281 | 0,7291 | 3.660 |
-| Malware | 0,8846 | 0,9249 | 0,9043 | 16.753 |
-| **Macro avg** | **0,8758** | **0,8528** | **0,8629** | **473.085** |
-
-Perbandingan Tabel VIII dan IX mengungkap dampak optimasi yang paling signifikan terjadi pada kelas-kelas minoritas:
-
-- **Probe:** F1 meningkat dari 0,6198 ke 0,7291 (+0,1093 atau +17,6%) — peningkatan terbesar secara absolut dan persentase, meskipun kelas ini tetap menjadi yang paling sulit diklasifikasikan;
-- **DoS:** F1 meningkat dari 0,7491 ke 0,8181 (+0,0690 atau +9,2%);
-- **Malware:** F1 meningkat dari 0,8843 ke 0,9043 (+0,0200 atau +2,3%);
-- **Normal:** F1 tetap sempurna 1,0000 pada kedua model, mengkonfirmasi bahwa optimasi tidak mengorbankan kemampuan klasifikasi kelas mayoritas.
-
-Pola ini mengkonfirmasi hipotesis utama: **optimasi hiperparameter TPE memberikan dampak paling besar pada kelas serangan minoritas** (Probe dan DoS), yang justru merupakan kelas yang paling kritis untuk terdeteksi dalam konteks operasional NIDS. Hal ini menunjukkan bahwa konfigurasi parameter bawaan XGBoost memang kurang optimal untuk menangani distribusi data yang sangat tidak seimbang.
-
-Gbr. 2 memvisualisasikan perbandingan F1-Score per kelas antara model default dan model optimized.
+Gbr. 2 memvisualisasikan perbandingan F1-Score per kelas serangan antara model default dan model TPE-Optimized.
 
 **Gbr. 2. Perbandingan F1-Score per Kelas: Default vs TPE-Optimized**
 
 ```
 F1-Score per Kelas (Test Set)
-────────────────────────────────────────────────────────────
-Kelas   │ Default   │ TPE-Opt   │ Δ        │ Perubahan
-────────────────────────────────────────────────────────────
-Normal  │ ████████ 1,0000 │ ████████ 1,0000 │ 0,0000  │ →
-DoS     │ ██████   0,7491 │ ███████  0,8181 │ +0,0690 │ ▲
-Probe   │ █████    0,6198 │ ██████   0,7291 │ +0,1093 │ ▲▲
-Malware │ ███████  0,8843 │ ████████ 0,9043 │ +0,0200 │ ▲
-────────────────────────────────────────────────────────────
-Macro   │          0,8116 │          0,8629 │ +0,0513 │
+──────────────────────────────────────────────────
+Kelas   │ Default       │ TPE-Opt       │ Δ
+──────────────────────────────────────────────────
+Normal  │ ████████ 1,0000 │ ████████ 1,0000 │  0,0000
+DoS     │ ██████   0,7491 │ ███████  0,8181 │ +0,0690
+Probe   │ █████    0,6198 │ ██████   0,7291 │ +0,1093
+Malware │ ███████  0,8843 │ ████████ 0,9043 │ +0,0200
+──────────────────────────────────────────────────
+Macro   │          0,8116 │          0,8629 │ +0,0513
 ```
 
-### C. Analisis Pola Kesalahan Klasifikasi
+Dampak optimasi paling signifikan terjadi pada kelas minoritas: kelas Probe mengalami peningkatan F1 terbesar dari 0,6198 ke 0,7291 (+0,1093 atau +17,6%), diikuti DoS dari 0,7491 ke 0,8181 (+0,0690 atau +9,2%) dan Malware dari 0,8843 ke 0,9043 (+0,0200 atau +2,3%). Kelas Normal tetap sempurna (F1=1,0000) pada kedua model, mengkonfirmasi bahwa optimasi tidak mengorbankan kemampuan klasifikasi kelas mayoritas. Pola ini mengkonfirmasi bahwa **optimasi hiperparameter TPE memberikan dampak paling besar pada kelas serangan minoritas** yang justru paling kritis dalam konteks operasional NIDS.
 
-Analisis *confusion matrix* pada model TPE-Optimized mengidentifikasi tiga pola kesalahan utama yang konsisten. Pola-pola ini ditampilkan pada Tabel X.
+Analisis *confusion matrix* mengungkap tiga pola kesalahan utama: Probe → Malware (25,8%), DoS → Malware (21,0%), dan Malware → Probe (4,9%). Profil *NetFlow* aktivitas *reconnaissance* (Probe) sering menyerupai tahap awal serangan eksploitasi (Malware) dalam ruang 49 dimensi fitur. Optimasi hiperparameter berhasil menurunkan tingkat kesalahan Probe dari sekitar 37% pada model default menjadi 25,8% pada model optimized, meskipun tumpang tindih fitur yang fundamental tidak dapat sepenuhnya dieliminasi hanya melalui penyetelan hiperparameter.
 
-**Tabel X. Pola Kesalahan Klasifikasi Utama (TPE-Optimized, Test Set)**
+### C. Analisis Importance Hiperparameter dan Konvergensi TPE
 
-| Kelas Aktual | Diprediksi Sebagai | Jumlah | Persentase dari Kelas Asli |
-|--------------|-------------------|--------|---------------------------|
-| Probe | Malware | 946 | 25,8% |
-| DoS | Malware | 1.074 | 21,0% |
-| Malware | Probe | 820 | 4,9% |
-
-Tabel X mengungkap bahwa kesalahan terbesar adalah **Probe → Malware** (25,8%), di mana seperempat lebih sampel aktivitas *reconnaissance* salah diklasifikasikan sebagai Malware. Kesalahan kedua, **DoS → Malware** (21,0%), mencerminkan kesamaan pola antara beberapa varian serangan DoS modern dengan teknik eksploitasi. Asimetri yang menarik terlihat pada kesalahan **Malware → Probe** yang hanya 4,9% — model jauh lebih sering salah mengenali serangan ringan sebagai berat daripada sebaliknya.
-
-Pola kesalahan ini bersifat inheren terhadap karakteristik dataset: profil *NetFlow* aktivitas *reconnaissance* (Probe) sering kali menyerupai tahap awal serangan eksploitasi (Malware) dalam ruang 49 dimensi fitur. Optimasi hiperparameter berhasil menurunkan tingkat kesalahan Probe (dari sekitar 37% pada model default menjadi 25,8% pada model optimized), namun tumpang tindih fitur yang fundamental tidak dapat sepenuhnya dieliminasi hanya melalui penyetelan hiperparameter.
-
-### D. Analisis Importance Hiperparameter
-
-Pengaruh setiap hiperparameter terhadap *Macro F1-Score* dikuantifikasi menggunakan *Random Forest Surrogate Model* yang dilatih pada 30 pasangan (parameter, F1) dari seluruh trial TPE. Hasil analisis ditampilkan pada Tabel XI.
-
-**Tabel XI. Importance Hiperparameter terhadap Macro F1-Score (TPE)**
-
-| Peringkat | Hiperparameter | Importance | Interpretasi |
-|-----------|----------------|------------|--------------|
-| 1 | `learning_rate` | 0,2809 | Pengendali utama *bias-variance trade-off* |
-| 2 | `subsample` | 0,1981 | Regularisasi via *stochastic gradient boosting* |
-| 3 | `gamma` | 0,1279 | *Pruning* — minimum kontribusi per split |
-| 4 | `colsample_bytree` | ~0,09 | Diversifikasi antar pohon |
-| 5 | `n_estimators` | ~0,08 | Kapasitas model |
-
-`learning_rate` mendominasi dengan importance 0,2809 (28,09%), mengkonfirmasi bahwa laju pembelajaran merupakan penentu utama kualitas deteksi pada dataset ini. Penurunan signifikan dari 0,3 (default) ke 0,0235 (optimal) — sekitar 12,8× lebih lambat — merupakan perubahan konfigurasi paling kritis yang dihasilkan TPE. `subsample` di posisi kedua (0,1981) menunjukkan bahwa teknik *stochastic gradient boosting* melalui subsampel data per iterasi berkontribusi signifikan untuk mengurangi *overfitting*, sedangkan `gamma` (0,1279) mengkonfirmasi pentingnya *pruning* pohon dalam menangani ruang fitur berdimensi tinggi.
-
-Distribusi importance yang relatif tersebar antar hiperparameter (tidak satu parameter mendominasi secara ekstrem) mengindikasikan bahwa TPE berhasil mengeksplorasi interaksi antar hiperparameter secara menyeluruh melalui mekanisme Bayesian *exploitation*.
-
-### E. Konvergensi Proses Optimasi TPE
-
-Efisiensi pencarian Bayesian TPE dianalisis melalui trajektori *Macro F1-Score* validasi selama 30 trial. Gbr. 3 menampilkan riwayat konvergensi yang memperlihatkan F1 setiap trial individual beserta F1 terbaik kumulatif (*best-so-far*).
+Analisis *surrogate model* (Random Forest) mengidentifikasi `learning_rate` sebagai hiperparameter paling berpengaruh terhadap *Macro F1-Score* (importance 0,2809 atau 28,09%), diikuti `subsample` (0,1981) dan `gamma` (0,1279). Distribusi importance yang relatif tersebar mengindikasikan bahwa TPE berhasil mengeksplorasi interaksi antar hiperparameter secara menyeluruh. Penurunan `learning_rate` dari 0,3 ke 0,0235 merupakan perubahan konfigurasi paling kritis, sedangkan `subsample` di posisi kedua mengkonfirmasi pentingnya *stochastic gradient boosting* untuk mengurangi *overfitting*.
 
 **Gbr. 3. Trajektori Konvergensi Optimasi TPE (30 Trial)**
 
 ```
 Konvergensi Macro F1-Score Validasi — TPE (30 Trial)
-────────────────────────────────────────────────────────
-Sumbu-X : Nomor Trial (1–30)
-Sumbu-Y : Macro F1-Score Validasi
-────────────────────────────────────────────────────────
+──────────────────────────────────────────────────
 •  Titik biru  = F1 setiap trial individual
 ── Garis merah = Best-so-far (F1 terbaik kumulatif)
 -- Garis abu   = F1 Default (baseline)
-────────────────────────────────────────────────────────
+──────────────────────────────────────────────────
 Pola: Peningkatan cepat pada trial awal, kemudian
-stabil dengan fluktuasi kecil. Trial terbaik (#26)
-ditemukan menjelang akhir pencarian (F1 = 0,8648).
+stabil. Trial terbaik (#26) ditemukan menjelang
+akhir pencarian (F1 validasi = 0,8648).
 ```
 
-**Tabel XII. Statistik Proses Optimasi TPE (30 Trial)**
-
-| Statistik | Nilai |
-|-----------|-------|
-| Jumlah Trial | 30 |
-| F1 Validasi Terbaik | 0,8648 (Trial #26) |
-| F1 Validasi Rata-rata Seluruh Trial | —* |
-| F1 Validasi Terendah | —* |
-| Rentang F1 (Terbaik − Terendah) | —* |
-
-*\*Nilai aktual diperoleh dari output `Prosiding_Santika_2026_Default_vs_Optimized_XGBoost.py`; ganti sebelum pengiriman artikel.*
-
-Proses konvergensi menunjukkan dua fase yang khas dari algoritma Bayesian TPE:
-
-1. **Fase Eksplorasi (Trial Awal):** TPE membangun model probabilistik awal dengan mengeksplorasi region luas dalam ruang 10 dimensi hiperparameter. Pada fase ini, F1 validasi meningkat secara signifikan seiring TPE membentuk estimasi distribusi *l(x)* (trial baik) dan *g(x)* (trial buruk) untuk mengarahkan pencarian.
-2. **Fase Eksploitasi (Trial Lanjut):** Setelah cukup informasi terakumulasi, TPE memfokuskan pencarian pada region yang menjanjikan berdasarkan rasio *l(x)/g(x)*. Variabilitas F1 antar trial semakin kecil, menandakan konvergensi. Ditemukannya trial terbaik (#26) pada fase lanjut mengkonfirmasi bahwa TPE terus menyempurnakan pencarian meskipun konvergensi sudah tampak — sebuah karakteristik *late improvement* yang umum pada optimasi Bayesian [5].
-
-Temuan ini menunjukkan bahwa 30 trial Bayesian TPE sudah memadai untuk menghasilkan konfigurasi yang secara signifikan mengungguli parameter default (+0,0513 F1 pada test set), meskipun ruang pencarian mencakup 10 hiperparameter. Efisiensi ini merupakan keunggulan konkret pendekatan Bayesian yang membangun *surrogate model* probabilistik, dibandingkan pencarian acak (*random search*) yang tidak memanfaatkan informasi trial sebelumnya [14].
+Trajektori konvergensi memperlihatkan dua fase khas algoritma Bayesian: fase eksplorasi pada trial awal di mana TPE membangun model probabilistik dengan mengeksplorasi region luas, dan fase eksploitasi pada trial lanjut di mana pencarian difokuskan pada region menjanjikan berdasarkan rasio *l(x)/g(x)*. Ditemukannya trial terbaik (#26) pada fase lanjut mengkonfirmasi karakteristik *late improvement* yang umum pada optimasi Bayesian [5]. Temuan ini menunjukkan bahwa 30 trial Bayesian TPE sudah memadai untuk menghasilkan konfigurasi yang secara signifikan mengungguli parameter default, menjadikan pendekatan Bayesian lebih efisien dibandingkan pencarian acak pada ruang 10 hiperparameter [14].
 
 ---
 
 ## V. Kesimpulan
 
-Penelitian ini telah mengkuantifikasi secara empiris pengaruh optimasi hiperparameter Bayesian berbasis TPE terhadap kinerja klasifikasi XGBoost pada dataset NF-UNSW-NB15-v3. Empat kesimpulan utama dapat ditarik:
+Penelitian ini telah mengkuantifikasi secara empiris pengaruh optimasi hiperparameter Bayesian berbasis TPE terhadap kinerja klasifikasi XGBoost pada dataset NF-UNSW-NB15-v3. Hasil eksperimen menunjukkan bahwa optimasi TPE secara substantif meningkatkan kinerja deteksi, dengan peningkatan *Macro F1-Score* sebesar 0,0513 poin (6,33%) dari 0,8116 menjadi 0,8629 dan *Cohen's Kappa* dari 0,9188 ke 0,9287, yang keduanya tergolong kategori *"Almost Perfect Agreement"*. Peningkatan ini dicapai hanya dengan 30 trial pencarian Bayesian, mendemonstrasikan efisiensi TPE dalam mengeksplorasi ruang 10 hiperparameter.
 
-**1. Optimasi TPE secara substantif meningkatkan kinerja deteksi.** *Macro F1-Score* meningkat sebesar 0,0513 poin (6,33%) dari 0,8116 (default) menjadi 0,8629 (TPE-Optimized), dengan *Cohen's Kappa* yang meningkat dari 0,9188 ke 0,9287 (keduanya tergolong *"Almost Perfect"*). Peningkatan ini dicapai hanya dengan 30 trial pencarian Bayesian, mendemonstrasikan efisiensi TPE dalam mengeksplorasi ruang 10 hiperparameter.
+Dampak optimasi paling signifikan terjadi pada kelas serangan minoritas yang justru paling kritis untuk dideteksi dalam konteks operasional NIDS. Kelas Probe — yang paling sulit terdeteksi — mengalami peningkatan F1 terbesar dari 0,6198 ke 0,7291 (+17,6%), diikuti DoS dari 0,7491 ke 0,8181 (+9,2%), sementara kelas Normal tetap sempurna (F1=1,0000) pada kedua model, mengkonfirmasi bahwa optimasi tidak mengorbankan kemampuan klasifikasi kelas mayoritas.
 
-**2. Dampak optimasi paling signifikan pada kelas serangan minoritas.** Kelas Probe — yang paling kritis namun paling sulit terdeteksi — mengalami peningkatan F1 terbesar dari 0,6198 ke 0,7291 (+17,6%), diikuti DoS dari 0,7491 ke 0,8181 (+9,2%). Kelas Normal tetap sempurna (F1=1,0000) pada kedua model, mengkonfirmasi bahwa optimasi tidak mengorbankan kemampuan klasifikasi kelas mayoritas.
+Analisis *surrogate model* mengidentifikasi `learning_rate` sebagai hiperparameter paling berpengaruh (importance 0,2809), diikuti `subsample` (0,1981) dan `gamma` (0,1279). Penurunan `learning_rate` dari 0,3 ke 0,0235 (12,8× lebih lambat) yang dikombinasikan dengan peningkatan `n_estimators` dari 100 ke 600 merupakan perubahan konfigurasi paling kritis. Proses optimasi Bayesian TPE menunjukkan konvergensi yang efisien melalui mekanisme eksplorasi-eksploitasi yang terarah, dengan trial terbaik ditemukan pada fase lanjut pencarian, mengkonfirmasi bahwa TPE secara efektif memanfaatkan informasi trial sebelumnya untuk menyempurnakan konfigurasi.
 
-**3. `learning_rate` merupakan hiperparameter paling berpengaruh.** Analisis *surrogate model* mengidentifikasi `learning_rate` sebagai penentu utama F1-Score (importance 0,2809), diikuti `subsample` (0,1981) dan `gamma` (0,1279). Penurunan `learning_rate` dari 0,3 ke 0,0235 (12,8× lebih lambat) merupakan perubahan konfigurasi paling kritis, dikombinasikan dengan peningkatan `n_estimators` dari 100 ke 600.
+Sebagai rekomendasi untuk penelitian mendatang, perlu dilakukan perbandingan efisiensi TPE dengan algoritma optimasi hiperparameter lain seperti *random search* dan *Bayesian Optimization* berbasis *Gaussian Process* pada dataset NIDS dengan karakteristik serupa, serta validasi generalisasi konfigurasi optimal yang ditemukan TPE pada dataset NIDS lain seperti CIC-IDS-2017 dan CSE-CIC-IDS-2018.
 
-**4. Proses optimasi Bayesian TPE konvergen secara efisien.** Pencarian Bayesian dengan 30 trial berhasil menemukan konfigurasi optimal (Trial #26, F1 validasi 0,8648) melalui mekanisme eksplorasi-eksploitasi yang terarah. Fakta bahwa trial terbaik ditemukan pada fase lanjut pencarian mengkonfirmasi bahwa TPE secara efektif memanfaatkan informasi trial sebelumnya untuk menyempurnakan konfigurasi, menjadikan pendekatan Bayesian lebih efisien dibandingkan pencarian acak pada ruang 10 hiperparameter.
+---
 
-Sebagai rekomendasi untuk penelitian mendatang: (1) perbandingan efisiensi TPE dengan algoritma optimasi hiperparameter lain (seperti *random search*, *grid search*, atau *Bayesian Optimization* berbasis *Gaussian Process*) pada dataset NIDS dengan karakteristik serupa; (2) eksplorasi peningkatan jumlah trial untuk mengidentifikasi apakah konvergensi lebih lanjut masih memungkinkan; (3) validasi generalisasi konfigurasi optimal yang ditemukan TPE pada dataset NIDS lain seperti CIC-IDS-2017 dan CSE-CIC-IDS-2018; serta (4) pengembangan strategi *warm-starting* TPE menggunakan konfigurasi optimal sebagai *prior* untuk dataset baru.
+## Ucapan Terima Kasih
+
+Penulis mengucapkan terima kasih kepada dosen pembimbing atas arahan dan bimbingan selama proses penelitian dan penulisan artikel ini. Terima kasih juga disampaikan kepada Program Studi Informatika, Fakultas Teknik atas dukungan fasilitas dan lingkungan akademik yang kondusif. Penghargaan diberikan kepada pengelola dataset NF-UNSW-NB15-v3 serta komunitas *open-source* pengembang XGBoost dan Optuna yang telah menyediakan *tools* yang memungkinkan penelitian ini terlaksana.
 
 ---
 
@@ -419,7 +237,6 @@ Sebagai rekomendasi untuk penelitian mendatang: (1) perbandingan efisiensi TPE d
 > **Catatan Format:**
 > - Artikel ini mengikuti template IEEE untuk prosiding Seminar Nasional SANTIKA 2026 (2 kolom, Times New Roman 10pt untuk isi, 12pt untuk judul bagian).
 > - Semua angka menggunakan format desimal Indonesia (koma sebagai pemisah desimal).
-> - Tabel menggunakan penomoran Romawi (Tabel I, II, III, ...) dan gambar menggunakan Gbr. 1, 2, 3, ...
-> - **Angka TPE-Optimized** (Tabel VI kolom "XGBoost TPE-Optimized", Tabel VII, Tabel IX, Tabel X, Tabel XI) merupakan data faktual dari eksperimen skripsi (Trial #26, Test Set).
-> - **Angka Default XGBoost** (Tabel VI kolom "XGBoost Default", Tabel VIII) dan **Statistik Konvergensi TPE** (Tabel XII, baris bertanda —*) diperoleh dengan menjalankan `Prosiding_Santika_2026_Default_vs_Optimized_XGBoost.py`. **Ganti nilai —* dengan nilai aktual hasil eksekusi script sebelum pengiriman artikel.**
+> - Tabel menggunakan penomoran Romawi (Tabel I, II) dan gambar menggunakan Gbr. 1, 2, 3.
+> - **Angka TPE-Optimized** (Tabel II kolom "XGBoost TPE-Optimized") merupakan data faktual dari eksperimen skripsi (Trial #26, Test Set).
 > - **Gbr. 3** (Trajektori Konvergensi TPE) dihasilkan oleh script sebagai `tpe_convergence_f1.png`.

@@ -522,38 +522,10 @@ else:
     print("\n✅ Convergence chart disimpan: tpe_convergence_f1.png")
 
 
-# ═══ CELL 12 ═══ Feature Importance (Gain-based, Top 20) ═══════════════════
+# ═══ CELL 12 ═══ Summary & Comparison Table ═════════════════════════════════
 
 print("\n" + "=" * 60)
-print("CELL 12: Feature Importance (Gain-based, Top 20)")
-print("=" * 60)
-
-# ── Ambil feature importance dari model TPE-Optimized ────────────────────────
-feat_imp = optimized_model.get_booster().get_score(importance_type='gain')
-feat_imp_series = pd.Series(feat_imp).sort_values(ascending=False)
-
-print("Top 20 Fitur berdasarkan Gain (TPE-Optimized):")
-for rank, (feat, gain) in enumerate(feat_imp_series.head(20).items(), 1):
-    bar = '█' * int(gain / feat_imp_series.iloc[0] * 30)
-    print(f"  {rank:2d}. {feat:30s} {gain:>10.2f}  {bar}")
-
-# ── Visualisasi Top 20 ────────────────────────────────────────────────────────
-top20 = feat_imp_series.head(20)
-fig, ax = plt.subplots(figsize=(10, 6))
-top20.plot(kind='barh', ax=ax, color='teal', edgecolor='white')
-ax.set_title('Top-20 Feature Importance (Gain)\nTPE-Optimized XGBoost — NF-UNSW-NB15-v3', fontsize=11)
-ax.set_xlabel('Gain')
-ax.invert_yaxis()
-plt.tight_layout()
-plt.savefig('feature_importance_gain_top20.png', dpi=150, bbox_inches='tight')
-plt.close()
-print("\n✅ Feature importance chart disimpan: feature_importance_gain_top20.png")
-
-
-# ═══ CELL 13 ═══ Summary & Comparison Table ═════════════════════════════════
-
-print("\n" + "=" * 60)
-print("CELL 13: Summary & Comparison Table")
+print("CELL 12: Summary & Comparison Table")
 print("=" * 60)
 
 # ── Ringkasan lengkap ─────────────────────────────────────────────────────────
@@ -634,4 +606,3 @@ print("Output yang dihasilkan:")
 print("  - confusion_matrix_default_vs_optimized.png")
 print("  - hp_importance_tpe_f1.png")
 print("  - tpe_convergence_f1.png")
-print("  - feature_importance_gain_top20.png")
