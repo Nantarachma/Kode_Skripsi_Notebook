@@ -193,9 +193,9 @@ Penulis mengucapkan terima kasih kepada dosen pembimbing atas arahan dan bimbing
 
 [2] T. Chen dan C. Guestrin, "XGBoost: A Scalable Tree Boosting System," dalam *Proc. 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, San Francisco, CA, USA, 2016, hal. 785-794. doi: 10.1145/2939672.2939785.
 
-[3] P. Probst, A.-L. Boulesteix, dan B. Bischl, "Tunability: Importance of Hyperparameters of Machine Learning Algorithms," *Journal of Machine Learning Research*, vol. 20, no. 53, hal. 1-32, 2019.
+[3] P. Probst, A.-L. Boulesteix, dan B. Bischl, "Tunability: Importance of Hyperparameters of Machine Learning Algorithms," *Journal of Machine Learning Research*, vol. 20, no. 53, hal. 1-32, 2019. [Online]. Available: http://jmlr.org/papers/v20/18-444.html
 
-[4] N. Moustafa dan J. Slay, "UNSW-NB15: A Comprehensive Data Set for Network Intrusion Detection Systems (UNSW-NB15 Network Data Set)," dalam *Proc. Military Communications and Information Systems Conference (MilCIS)*, Canberra, Australia, 2015, hal. 1-6.
+[4] N. Moustafa dan J. Slay, "UNSW-NB15: A Comprehensive Data Set for Network Intrusion Detection Systems (UNSW-NB15 Network Data Set)," dalam *Proc. Military Communications and Information Systems Conference (MilCIS)*, Canberra, Australia, 2015, hal. 1-6. [Online]. Available: https://ieeexplore.ieee.org/document/7348942
 
 [5] N. Moustafa dan J. Slay, "The Evaluation of Network Anomaly Detection Systems: Statistical Analysis of the UNSW-NB15 Data Set and the Comparison with the KDD99 Data Set," *Information Security Journal: A Global Perspective*, vol. 25, no. 1-3, hal. 18-31, 2016. doi: 10.1080/19393555.2015.1125974.
 
@@ -205,7 +205,7 @@ Penulis mengucapkan terima kasih kepada dosen pembimbing atas arahan dan bimbing
 
 [8] M. Luay, S. Layeghy, M. Sarhan, S. Hoseininoorbin, N. Moustafa, dan M. Portmann, *NF-UNSW-NB15-v3*, dataset, The University of Queensland, 2025. doi: 10.48610/6e0eda1.
 
-[9] J. Bergstra, R. Bardenet, Y. Bengio, dan Y. Kegl, "Algorithms for Hyper-Parameter Optimization," dalam *Proc. 25th International Conference on Neural Information Processing Systems (NeurIPS)*, Granada, Spain, 2011, hal. 2546-2554.
+[9] J. Bergstra, R. Bardenet, Y. Bengio, dan Y. Kegl, "Algorithms for Hyper-Parameter Optimization," dalam *Proc. 25th International Conference on Neural Information Processing Systems (NeurIPS)*, Granada, Spain, 2011, hal. 2546-2554. [Online]. Available: https://papers.nips.cc/paper/2011/hash/86e8f7ab32cfd12577bc2619bc635690-Abstract.html
 
 [10] T. Akiba, S. Sano, T. Yanase, T. Ohta, dan M. Koyama, "Optuna: A Next-Generation Hyperparameter Optimization Framework," dalam *Proc. 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, Anchorage, AK, USA, 2019, hal. 2623-2631. doi: 10.1145/3292500.3330701.
 
@@ -223,7 +223,7 @@ Penulis mengucapkan terima kasih kepada dosen pembimbing atas arahan dan bimbing
 
 [17] N. V. Chawla, K. W. Bowyer, L. O. Hall, dan W. P. Kegelmeyer, "SMOTE: Synthetic Minority Over-sampling Technique," *Journal of Artificial Intelligence Research*, vol. 16, hal. 321-357, 2002. doi: 10.1613/jair.953.
 
-[18] F. Hutter, H. H. Hoos, dan K. Leyton-Brown, "An Efficient Approach for Assessing Hyperparameter Importance," dalam *Proc. 31st International Conference on Machine Learning (ICML)*, Beijing, China, 2014, hal. 754-762.
+[18] F. Hutter, H. H. Hoos, dan K. Leyton-Brown, "An Efficient Approach for Assessing Hyperparameter Importance," dalam *Proc. 31st International Conference on Machine Learning (ICML)*, Beijing, China, 2014, hal. 754-762. [Online]. Available: http://proceedings.mlr.press/v32/hutter14.html
 
 [19] J. R. Landis dan G. G. Koch, "The Measurement of Observer Agreement for Categorical Data," *Biometrics*, vol. 33, no. 1, hal. 159-174, 1977. doi: 10.2307/2529310.
 
