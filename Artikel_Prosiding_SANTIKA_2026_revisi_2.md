@@ -189,45 +189,45 @@ Penulis mengucapkan terima kasih kepada dosen pembimbing atas arahan dan bimbing
 
 ## Referensi
 
-[1] M. Khraisat, I. Gondal, P. Vamplew, dan J. Kamruzzaman, "Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges," *Cybersecurity*, vol. 2, no. 1, Art. no. 20, 2019.
+[1] M. Khraisat, I. Gondal, P. Vamplew, dan J. Kamruzzaman, "Survey of Intrusion Detection Systems: Techniques, Datasets and Challenges," *Cybersecurity*, vol. 2, no. 1, Art. no. 20, 2019. doi: 10.1186/s42400-019-0038-7.
 
-[2] T. Chen dan C. Guestrin, "XGBoost: A Scalable Tree Boosting System," dalam *Proc. 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, San Francisco, CA, USA, 2016, hal. 785-794.
+[2] T. Chen dan C. Guestrin, "XGBoost: A Scalable Tree Boosting System," dalam *Proc. 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, San Francisco, CA, USA, 2016, hal. 785-794. doi: 10.1145/2939672.2939785.
 
 [3] P. Probst, A.-L. Boulesteix, dan B. Bischl, "Tunability: Importance of Hyperparameters of Machine Learning Algorithms," *Journal of Machine Learning Research*, vol. 20, no. 53, hal. 1-32, 2019.
 
 [4] N. Moustafa dan J. Slay, "UNSW-NB15: A Comprehensive Data Set for Network Intrusion Detection Systems (UNSW-NB15 Network Data Set)," dalam *Proc. Military Communications and Information Systems Conference (MilCIS)*, Canberra, Australia, 2015, hal. 1-6.
 
-[5] N. Moustafa dan J. Slay, "The Evaluation of Network Anomaly Detection Systems: Statistical Analysis of the UNSW-NB15 Data Set and the Comparison with the KDD99 Data Set," *Information Security Journal: A Global Perspective*, vol. 25, no. 1-3, hal. 18-31, 2016.
+[5] N. Moustafa dan J. Slay, "The Evaluation of Network Anomaly Detection Systems: Statistical Analysis of the UNSW-NB15 Data Set and the Comparison with the KDD99 Data Set," *Information Security Journal: A Global Perspective*, vol. 25, no. 1-3, hal. 18-31, 2016. doi: 10.1080/19393555.2015.1125974.
 
-[6] M. Sarhan, S. Layeghy, N. Moustafa, dan M. Portmann, "NetFlow Datasets for Machine Learning-Based Network Intrusion Detection Systems," dalam *Big Data Technologies and Applications*, Cham, Switzerland: Springer, 2021, hal. 117-135.
+[6] M. Sarhan, S. Layeghy, N. Moustafa, dan M. Portmann, "NetFlow Datasets for Machine Learning-Based Network Intrusion Detection Systems," dalam *Big Data Technologies and Applications*, Cham, Switzerland: Springer, 2021, hal. 117-135. doi: 10.1007/978-3-030-72080-7_7.
 
-[7] M. Sarhan, S. Layeghy, dan M. Portmann, "Towards a Standard Feature Set for Network Intrusion Detection System Datasets," *Mobile Networks and Applications*, vol. 27, hal. 357-370, 2022.
+[7] M. Sarhan, S. Layeghy, dan M. Portmann, "Towards a Standard Feature Set for Network Intrusion Detection System Datasets," *Mobile Networks and Applications*, vol. 27, hal. 357-370, 2022. doi: 10.1007/s11036-021-01843-0.
 
 [8] M. Luay, S. Layeghy, M. Sarhan, S. Hoseininoorbin, N. Moustafa, dan M. Portmann, *NF-UNSW-NB15-v3*, dataset, The University of Queensland, 2025. doi: 10.48610/6e0eda1.
 
 [9] J. Bergstra, R. Bardenet, Y. Bengio, dan Y. Kegl, "Algorithms for Hyper-Parameter Optimization," dalam *Proc. 25th International Conference on Neural Information Processing Systems (NeurIPS)*, Granada, Spain, 2011, hal. 2546-2554.
 
-[10] T. Akiba, S. Sano, T. Yanase, T. Ohta, dan M. Koyama, "Optuna: A Next-Generation Hyperparameter Optimization Framework," dalam *Proc. 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, Anchorage, AK, USA, 2019, hal. 2623-2631.
+[10] T. Akiba, S. Sano, T. Yanase, T. Ohta, dan M. Koyama, "Optuna: A Next-Generation Hyperparameter Optimization Framework," dalam *Proc. 25th ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD)*, Anchorage, AK, USA, 2019, hal. 2623-2631. doi: 10.1145/3292500.3330701.
 
-[11] S. S. Dhaliwal, A.-A. Nahid, dan R. Abbas, "Effective Intrusion Detection System Using XGBoost," *Information*, vol. 9, no. 7, Art. no. 149, 2018.
+[11] S. S. Dhaliwal, A.-A. Nahid, dan R. Abbas, "Effective Intrusion Detection System Using XGBoost," *Information*, vol. 9, no. 7, Art. no. 149, 2018. doi: 10.3390/info9070149.
 
-[12] S. M. Kasongo dan Y. Sun, "Performance Analysis of Intrusion Detection Systems Using a Feature Selection Method on the UNSW-NB15 Dataset," *Journal of Big Data*, vol. 7, Art. no. 105, 2020.
+[12] S. M. Kasongo dan Y. Sun, "Performance Analysis of Intrusion Detection Systems Using a Feature Selection Method on the UNSW-NB15 Dataset," *Journal of Big Data*, vol. 7, Art. no. 105, 2020. doi: 10.1186/s40537-020-00379-6.
 
-[13] P. Devan dan N. Khare, "An Efficient XGBoost-DNN-Based Classification Model for Network Intrusion Detection System," *Neural Computing and Applications*, vol. 32, no. 16, hal. 12499-12514, 2020.
+[13] P. Devan dan N. Khare, "An Efficient XGBoost-DNN-Based Classification Model for Network Intrusion Detection System," *Neural Computing and Applications*, vol. 32, no. 16, hal. 12499-12514, 2020. doi: 10.1007/s00521-020-04708-x.
 
-[14] K. A. Binsaeed dan A. M. Hafez, "Enhancing Intrusion Detection Systems with XGBoost Feature Selection and Deep Learning Approaches," *International Journal of Advanced Computer Science and Applications*, vol. 14, no. 5, 2023.
+[14] K. A. Binsaeed dan A. M. Hafez, "Enhancing Intrusion Detection Systems with XGBoost Feature Selection and Deep Learning Approaches," *International Journal of Advanced Computer Science and Applications*, vol. 14, no. 5, 2023. doi: 10.14569/IJACSA.2023.0140584.
 
-[15] S. More, M. Idrissi, H. Mahmoud, dan A. T. Asyhari, "Enhanced Intrusion Detection Systems Performance with UNSW-NB15 Data Analysis," *Algorithms*, vol. 17, no. 2, Art. no. 64, 2024.
+[15] S. More, M. Idrissi, H. Mahmoud, dan A. T. Asyhari, "Enhanced Intrusion Detection Systems Performance with UNSW-NB15 Data Analysis," *Algorithms*, vol. 17, no. 2, Art. no. 64, 2024. doi: 10.3390/a17020064.
 
-[16] H. He dan E. A. Garcia, "Learning from Imbalanced Data," *IEEE Transactions on Knowledge and Data Engineering*, vol. 21, no. 9, hal. 1263-1284, 2009.
+[16] H. He dan E. A. Garcia, "Learning from Imbalanced Data," *IEEE Transactions on Knowledge and Data Engineering*, vol. 21, no. 9, hal. 1263-1284, 2009. doi: 10.1109/TKDE.2008.239.
 
-[17] N. V. Chawla, K. W. Bowyer, L. O. Hall, dan W. P. Kegelmeyer, "SMOTE: Synthetic Minority Over-sampling Technique," *Journal of Artificial Intelligence Research*, vol. 16, hal. 321-357, 2002.
+[17] N. V. Chawla, K. W. Bowyer, L. O. Hall, dan W. P. Kegelmeyer, "SMOTE: Synthetic Minority Over-sampling Technique," *Journal of Artificial Intelligence Research*, vol. 16, hal. 321-357, 2002. doi: 10.1613/jair.953.
 
 [18] F. Hutter, H. H. Hoos, dan K. Leyton-Brown, "An Efficient Approach for Assessing Hyperparameter Importance," dalam *Proc. 31st International Conference on Machine Learning (ICML)*, Beijing, China, 2014, hal. 754-762.
 
-[19] J. R. Landis dan G. G. Koch, "The Measurement of Observer Agreement for Categorical Data," *Biometrics*, vol. 33, no. 1, hal. 159-174, 1977.
+[19] J. R. Landis dan G. G. Koch, "The Measurement of Observer Agreement for Categorical Data," *Biometrics*, vol. 33, no. 1, hal. 159-174, 1977. doi: 10.2307/2529310.
 
-[20] M. Sokolova dan G. Lapalme, "A Systematic Analysis of Performance Measures for Classification Tasks," *Information Processing & Management*, vol. 45, no. 4, hal. 427-437, 2009.
+[20] M. Sokolova dan G. Lapalme, "A Systematic Analysis of Performance Measures for Classification Tasks," *Information Processing & Management*, vol. 45, no. 4, hal. 427-437, 2009. doi: 10.1016/j.ipm.2009.03.002.
 
 ---
 
