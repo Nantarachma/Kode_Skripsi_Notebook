@@ -52,7 +52,7 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux, Python 3.12.12) dengan *rando
 Dataset yang digunakan adalah NF-UNSW-NB15-v3 dengan ukuran awal 2.365.424 baris dan 55 kolom. Audit awal menunjukkan 14.815 baris duplikat, total nilai hilang 63.425, dan 10 kelas pada label `Attack`. Distribusi label sangat tidak seimbang, dengan kelas *Benign* sebesar 94,60% dan kelas terkecil (*Worms*) hanya 0,01%.
 
 **Gambar 1. Distribusi Label Dataset NF-UNSW-NB15-v3 (Cell 6)**  
-Visual distribusi label menegaskan ketimpangan kelas yang tinggi, sehingga pemilihan metrik evaluasi tidak cukup hanya mengandalkan accuracy.
+Visual distribusi label menegaskan ketimpangan kelas yang sangat tinggi, ditandai dominasi kelas *Benign* dan proporsi yang sangat kecil pada beberapa kelas serangan seperti *Worms*, *Analysis*, dan *Shellcode*. Pola ini menunjukkan bahwa model berpotensi bias ke kelas mayoritas apabila evaluasi hanya berfokus pada metrik global. Oleh karena itu, gambar ini menjadi dasar metodologis untuk menekankan penggunaan metrik yang lebih peka terhadap ketidakseimbangan kelas, seperti Balanced Accuracy, Recall per kelas, F1, dan MCC, agar kualitas deteksi ancaman minoritas dapat dinilai lebih adil.
 
 **Tabel 2. Ringkasan Audit Dataset**
 
@@ -84,7 +84,7 @@ Visual distribusi label menegaskan ketimpangan kelas yang tinggi, sehingga pemil
 Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah penghapusan duplikasi, tersisa 2.350.609 sampel dengan 54 fitur prediktor. Data dibagi secara *stratified* menjadi 80% data latih dan 20% data uji sehingga proporsi kelas train-test tetap konsisten.
 
 **Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
-Visual ini menunjukkan bahwa pembagian data menjaga komposisi kelas secara proporsional pada train dan test.
+Visual ini menunjukkan bahwa pembagian data dengan *stratified split* berhasil mempertahankan komposisi tiap kelas secara proporsional antara data latih dan data uji. Konsistensi distribusi tersebut penting untuk menghindari pergeseran distribusi kelas antar subset yang dapat menimbulkan estimasi performa bias. Dengan demikian, perbandingan performa XGBoost dan CatBoost pada tahap evaluasi menjadi lebih valid karena kedua model diuji pada kondisi distribusi yang representatif terhadap data latihnya.
 
 **Tabel 4. Ringkasan Split Data**
 
@@ -135,10 +135,10 @@ Peringkat model ditetapkan dengan prioritas **F1 terlebih dahulu, lalu Recall**.
 Berdasarkan prioritas ranking F1→Recall, model terbaik adalah **XGBoost**. Selisih performa terhadap CatBoost sebesar +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Nilai CV F1 yang sangat kecil deviasinya (std 0,0001 pada kedua model) menunjukkan konsistensi performa antarfold.
 
 **Gambar 3. Bar Chart Metrik Utama Antar Model (Cell 21)**  
-Bar chart memperlihatkan perbandingan metrik agregat utama secara ringkas dan menguatkan posisi XGBoost pada kualitas deteksi.
+Bar chart memperlihatkan perbandingan metrik agregat utama secara langsung sehingga perbedaan performa antarmodel dapat dibaca cepat pada satu bidang visual. Terlihat bahwa XGBoost unggul tipis namun konsisten pada metrik kualitas deteksi, khususnya F1, Recall, Balanced Accuracy, dan MCC, yang relevan untuk skenario data tidak seimbang. Gambar ini memperkuat hasil tabular bahwa keunggulan XGBoost bukan hanya pada satu metrik, tetapi pada kombinasi metrik yang merepresentasikan ketepatan klasifikasi dan stabilitas prediksi.
 
 **Gambar 4. Heatmap Komparasi Metrik Antar Model (Cell 25)**  
-Heatmap komparasi metrik memberikan ringkasan visual posisi relatif kedua model pada metrik utama.
+Heatmap komparasi metrik menyajikan posisi relatif kedua model dalam format intensitas warna sehingga pola keunggulan dapat diidentifikasi secara cepat dan menyeluruh. Dengan tampilan terstruktur per metrik, pembaca dapat melihat bahwa XGBoost cenderung memiliki nilai lebih tinggi pada metrik kualitas deteksi, sementara CatBoost tetap kompetitif pada metrik umum tertentu. Representasi ini membantu menyederhanakan interpretasi banyak metrik sekaligus tanpa kehilangan konteks komparatif antar model.
 
 ### 3.2 Analisis Performa Per Kelas
 
@@ -162,13 +162,13 @@ Kedua model mencapai F1 = 1,0000 pada kelas mayoritas (*Benign*), namun perbedaa
 Pada agregat *macro average*, XGBoost (0,7902) lebih tinggi dibanding CatBoost (0,6730), menegaskan keunggulan stabilitas antar-kelas saat data tidak seimbang. Pada *weighted average*, keduanya tinggi, namun XGBoost tetap unggul (0,9903 vs 0,9865).
 
 **Gambar 5. Heatmap Metrik Detail per Kelas antar Model (Cell 19)**  
-Heatmap metrik per kelas membantu menyoroti kelas serangan yang masih sulit dideteksi dan menunjukkan perbedaan performa XGBoost dan CatBoost pada level granular.
+Heatmap metrik detail per kelas memperlihatkan variasi precision, recall, dan F1 pada masing-masing kelas serangan, sehingga kelemahan model tidak tertutup oleh skor agregat yang tinggi. Dari visual ini terlihat bahwa kelas minoritas masih menjadi area paling menantang, namun XGBoost menunjukkan kestabilan yang lebih baik dibanding CatBoost pada beberapa kelas penting seperti *Backdoor*, *Exploits*, dan *Shellcode*. Gambar ini menjadi bukti bahwa evaluasi granular per kelas diperlukan untuk menilai kesiapan model IDS dalam menghadapi distribusi serangan yang tidak merata.
 
 **Gambar 6. Confusion Matrix (Raw Count) per Model (Cell 22, visual pertama)**  
-Confusion matrix mentah menampilkan pola salah klasifikasi absolut antarkelas pada masing-masing model.
+Confusion matrix mentah menampilkan jumlah prediksi benar dan salah secara absolut untuk setiap pasangan kelas aktual-prediksi pada masing-masing model. Visual ini membantu mengidentifikasi kelas mana yang paling sering tertukar, serta menunjukkan skala kesalahan nyata yang terjadi pada data uji. Informasi absolut ini penting untuk analisis operasional karena memberikan gambaran langsung tentang volume *false positive* dan *false negative* yang mungkin berdampak pada beban investigasi di lingkungan IDS.
 
 **Gambar 7. Confusion Matrix (Normalized) per Model (Cell 22, visual kedua)**  
-Confusion matrix ternormalisasi menyajikan proporsi kesalahan relatif sehingga lebih informatif untuk mengevaluasi kelas minoritas.
+Confusion matrix ternormalisasi menyajikan proporsi prediksi per kelas sehingga memungkinkan perbandingan yang adil antar kelas dengan ukuran sampel berbeda jauh. Berbeda dari matriks mentah, visual ini menonjolkan kemampuan model pada kelas minoritas karena pengaruh dominasi kelas mayoritas telah dinormalisasi. Dengan pendekatan ini, kelemahan relatif pada kelas serangan langka dapat terlihat lebih jelas dan menjadi masukan penting untuk strategi peningkatan model di tahap lanjutan.
 
 ### 3.3 Trade-off Kualitas Deteksi vs Efisiensi
 
@@ -177,7 +177,7 @@ Meskipun XGBoost unggul pada kualitas prediksi, CatBoost lebih cepat pada tahap 
 Secara praktis, temuan ini menunjukkan bahwa XGBoost lebih direkomendasikan ketika prioritas utama adalah kualitas deteksi ancaman dan meminimalkan *missed attack*, sedangkan CatBoost lebih layak dipilih ketika prioritas sistem adalah latensi rendah dan efisiensi komputasi untuk deployment real-time dengan sumber daya terbatas.
 
 **Gambar 8. Grafik Waktu Komputasi (Training dan Inferensi) Antar Model (Cell 23)**  
-Grafik waktu komputasi memperjelas trade-off antara kualitas prediksi dan efisiensi operasional kedua model.
+Grafik waktu komputasi memperlihatkan perbandingan efisiensi pelatihan dan inferensi kedua model dalam konteks implementasi nyata. Terlihat bahwa CatBoost lebih unggul pada kecepatan pelatihan maupun latensi inferensi per sampel, sedangkan XGBoost unggul pada kualitas deteksi berdasarkan metrik klasifikasi. Gambar ini menegaskan adanya *trade-off* praktis antara efektivitas deteksi dan efisiensi operasional, sehingga pemilihan model perlu disesuaikan dengan prioritas sistem, apakah berfokus pada akurasi deteksi ancaman atau kebutuhan respons real-time.
 
 ### 3.4 Implikasi untuk Implementasi IDS
 
