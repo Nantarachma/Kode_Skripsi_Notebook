@@ -7,7 +7,7 @@ Email: penulis@domain.ac.id
 
 ## ABSTRAK
 
-Penelitian ini membahas kebutuhan model *Intrusion Detection System* (IDS) yang mampu mempertahankan kinerja deteksi tinggi pada data jaringan berskala besar dan tidak seimbang. Tujuan penelitian adalah membandingkan performa dua algoritma *gradient boosting*, yaitu XGBoost dan CatBoost, pada dataset NF-UNSW-NB15-v3. Metodologi penelitian menggunakan skenario klasifikasi multikelas dengan *stratified train-test split* 80:20, *preprocessing* numerik-kategorikal berbasis imputasi median dan *native categorical handling*, serta *class weighting* untuk mengatasi *imbalance*. Evaluasi dilakukan menggunakan metrik Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, ditambah validasi 5-fold *cross-validation* berbasis weighted F1. Hasil eksperimen menunjukkan XGBoost unggul pada kualitas prediksi dengan Accuracy 0,9901; Balanced Accuracy 0,8547; Precision 0,9915; Recall 0,9901; F1 0,9903; MCC 0,9061; ROC-AUC 0,9999; serta CV F1 0,9901±0,0001. CatBoost memiliki performa deteksi sedikit di bawah XGBoost (F1 0,9865), namun lebih efisien secara komputasi dengan waktu pelatihan 34,386 detik dan inferensi 0,0017 ms/sampel. Kesimpulan penelitian menegaskan bahwa XGBoost lebih tepat dipilih ketika prioritas utama adalah kualitas deteksi, sementara CatBoost menjadi alternatif ketika kebutuhan utama adalah efisiensi waktu.
+Penelitian ini membahas kebutuhan model *Intrusion Detection System* (IDS) yang mampu mempertahankan kinerja deteksi tinggi pada data jaringan berskala besar dan tidak seimbang. Tujuan penelitian adalah membandingkan performa dua algoritma *gradient boosting*, yaitu XGBoost dan CatBoost, pada dataset NF-UNSW-NB15-v3. Metodologi penelitian menggunakan skenario klasifikasi multikelas dengan *stratified train-test split* 80:20, *preprocessing* numerik-kategorikal berbasis imputasi median dan *native categorical handling*, serta *class weighting* untuk mengatasi *imbalance*. Evaluasi dilakukan menggunakan metrik Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, ditambah validasi 5-fold *cross-validation* berbasis weighted F1. Hasil eksperimen menunjukkan XGBoost unggul pada kualitas prediksi dengan Accuracy 0.9901; Balanced Accuracy 0.8547; Precision 0.9915; Recall 0.9901; F1 0.9903; MCC 0.9061; ROC-AUC 0.9999; serta CV F1 0.9901±0.0001. CatBoost memiliki performa deteksi sedikit di bawah XGBoost (F1 0.9865), namun lebih efisien secara komputasi dengan waktu pelatihan 34.386 detik dan inferensi 0.0017 ms/sampel. Kesimpulan penelitian menegaskan bahwa XGBoost lebih tepat dipilih ketika prioritas utama adalah kualitas deteksi, sementara CatBoost menjadi alternatif ketika kebutuhan utama adalah efisiensi waktu.
 
 **Kata kunci**: deteksi intrusi, XGBoost, CatBoost, NF-UNSW-NB15-v3, klasifikasi multikelas
 
@@ -28,7 +28,7 @@ Penelitian ini difokuskan pada komparasi XGBoost dan CatBoost menggunakan alur e
 ## METODE PENELITIAN
 
 ### 1. Setup dan Data Eksperimen
-Eksperimen dijalankan pada lingkungan Kaggle Notebook (Python 3.12.12, Linux) dengan dukungan akselerasi GPU aktif untuk XGBoost dan CatBoost. Dataset yang digunakan adalah **NF-UNSW-NB15-v3** dengan ukuran data **2.365.424 baris dan 55 kolom** saat pemanggilan awal.
+Eksperimen dijalankan pada lingkungan Kaggle Notebook (Python 3.12.12, Linux) dengan dukungan akselerasi GPU aktif untuk XGBoost dan CatBoost. Dataset yang digunakan adalah **NF-UNSW-NB15-v3** dengan ukuran data **2,365,424 baris dan 55 kolom** saat pemanggilan awal.
 
 ### 2. Skenario Klasifikasi dan Split Data
 Penelitian menggunakan skenario **multikelas**. Setelah pembersihan minimum (termasuk penghapusan duplikasi), data dibagi dengan *stratified split* menjadi data latih (80%) dan data uji (20%) agar proporsi kelas tetap terjaga.
@@ -56,8 +56,8 @@ Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, serta waktu pe
 
 | Model | Accuracy | Balanced Accuracy | Precision | Recall | F1 | MCC | ROC-AUC | CV F1 (mean±std) | Train Time (s) | Infer/Sample (ms) |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| XGBoost | 0,9901 | 0,8547 | 0,9915 | 0,9901 | 0,9903 | 0,9061 | 0,9999 | 0,9901 ± 0,0001 | 54,995 | 0,0042 |
-| CatBoost | 0,9861 | 0,8361 | 0,9894 | 0,9861 | 0,9865 | 0,8677 | 0,9999 | 0,9863 ± 0,0001 | 34,386 | 0,0017 |
+| XGBoost | 0.9901 | 0.8547 | 0.9915 | 0.9901 | 0.9903 | 0.9061 | 0.9999 | 0.9901 ± 0.0001 | 54.995 | 0.0042 |
+| CatBoost | 0.9861 | 0.8361 | 0.9894 | 0.9861 | 0.9865 | 0.8677 | 0.9999 | 0.9863 ± 0.0001 | 34.386 | 0.0017 |
 
 Berdasarkan prioritas metrik F1 lalu Recall, model terbaik adalah **XGBoost**. Hal ini menunjukkan bahwa pada konteks IDS, XGBoost memberikan kualitas deteksi yang lebih kuat secara keseluruhan dan lebih stabil terhadap ketidakseimbangan kelas (tercermin dari Balanced Accuracy dan MCC yang lebih tinggi).
 
@@ -78,7 +78,7 @@ Hasil komparasi menegaskan bahwa pemilihan model IDS tidak cukup hanya mempertim
 
 ## KESIMPULAN
 
-Penelitian komparatif pada dataset NF-UNSW-NB15-v3 menunjukkan bahwa **XGBoost** merupakan model terbaik berdasarkan prioritas kualitas deteksi (F1/Recall), dengan F1 0,9903 dan Recall 0,9901, serta stabilitas prediksi yang lebih baik (Balanced Accuracy 0,8547; MCC 0,9061). **CatBoost** tetap kompetitif dengan F1 0,9865 dan menawarkan keunggulan efisiensi komputasi melalui waktu pelatihan serta inferensi yang lebih cepat. Untuk kebutuhan IDS berbasis kualitas deteksi, XGBoost direkomendasikan; sedangkan untuk kebutuhan dengan batasan komputasi ketat, CatBoost layak dipertimbangkan.
+Penelitian komparatif pada dataset NF-UNSW-NB15-v3 menunjukkan bahwa **XGBoost** merupakan model terbaik berdasarkan prioritas kualitas deteksi (F1/Recall), dengan F1 0.9903 dan Recall 0.9901, serta stabilitas prediksi yang lebih baik (Balanced Accuracy 0.8547; MCC 0.9061). **CatBoost** tetap kompetitif dengan F1 0.9865 dan menawarkan keunggulan efisiensi komputasi melalui waktu pelatihan serta inferensi yang lebih cepat. Untuk kebutuhan IDS berbasis kualitas deteksi, XGBoost direkomendasikan; sedangkan untuk kebutuhan dengan batasan komputasi ketat, CatBoost layak dipertimbangkan.
 
 ## UCAPAN TERIMA KASIH
 
