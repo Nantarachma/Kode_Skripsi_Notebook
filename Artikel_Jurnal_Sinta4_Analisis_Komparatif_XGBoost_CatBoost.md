@@ -19,9 +19,9 @@ This study addresses the need for an Intrusion Detection System (IDS) model that
 
 ## 1. PENDAHULUAN
 
-Pertumbuhan lalu lintas jaringan modern meningkatkan kompleksitas pola serangan dan menuntut sistem deteksi intrusi yang akurat, stabil pada kelas minoritas, serta efisien untuk implementasi operasional. Pada konteks ini, model *gradient boosting* menjadi kandidat kuat karena kemampuan pemodelan nonlinier, robust terhadap heterogenitas fitur, dan dukungan akselerasi komputasi.
+Pertumbuhan lalu lintas jaringan modern meningkatkan kompleksitas pola serangan dan menuntut sistem deteksi intrusi yang akurat, stabil pada kelas minoritas, serta efisien untuk implementasi operasional (Ring et al., 2019). Pada konteks ini, model *gradient boosting* menjadi kandidat kuat karena kemampuan pemodelan nonlinier, robust terhadap heterogenitas fitur, dan dukungan akselerasi komputasi (Chen & Guestrin, 2016; Prokhorenkova et al., 2018).
 
-Dataset NF-UNSW-NB15-v3 dipilih karena merepresentasikan kondisi realistis data jaringan skala besar dengan distribusi kelas yang sangat timpang. Karakteristik tersebut penting untuk menguji tidak hanya performa rata-rata model, tetapi juga kemampuan model mendeteksi kelas serangan minoritas.
+Dataset NF-UNSW-NB15-v3 dipilih karena merepresentasikan kondisi realistis data jaringan skala besar dengan distribusi kelas yang sangat timpang (Moustafa & Slay, 2015; Sarhan et al., 2021). Karakteristik tersebut penting untuk menguji tidak hanya performa rata-rata model, tetapi juga kemampuan model mendeteksi kelas serangan minoritas, khususnya pada konteks *class imbalance* (He & Garcia, 2009).
 
 Penelitian ini berfokus pada komparasi baseline XGBoost dan CatBoost menggunakan protokol evaluasi yang setara dan reproduksibel. Kontribusi penelitian meliputi: (1) evaluasi kuantitatif dua model pada skenario multikelas 10 kelas yang sama, (2) analisis gabungan metrik kualitas deteksi dan metrik efisiensi komputasi, serta (3) penyusunan dasar keputusan pemilihan model IDS sesuai kebutuhan implementasi.
 
@@ -81,7 +81,7 @@ Visual distribusi label menegaskan ketimpangan kelas yang sangat tinggi. Dominas
 
 ### 2.3 Skenario Eksperimen dan Split Data
 
-Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah penghapusan duplikasi, tersisa 2.350.609 sampel dengan 54 fitur prediktor. Data dibagi secara *stratified* menjadi 80% data latih dan 20% data uji sehingga proporsi kelas train-test tetap konsisten.
+Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah penghapusan duplikasi, tersisa 2.350.609 sampel dengan 54 fitur prediktor. Data dibagi secara *stratified* menjadi 80% data latih dan 20% data uji sehingga proporsi kelas train-test tetap konsisten, mengikuti praktik evaluasi klasifikasi terstandar (Pedregosa et al., 2011).
 
 **Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
 Visual ini menunjukkan bahwa pembagian data dengan *stratified split* berhasil mempertahankan komposisi tiap kelas secara proporsional antara data latih dan data uji. Konsistensi distribusi tersebut penting untuk menghindari pergeseran distribusi kelas antar subset yang dapat menimbulkan estimasi performa bias. Dengan demikian, perbandingan performa XGBoost dan CatBoost pada tahap evaluasi menjadi lebih valid karena kedua model diuji pada kondisi distribusi yang representatif terhadap data latihnya.
@@ -99,13 +99,13 @@ Visual ini menunjukkan bahwa pembagian data dengan *stratified split* berhasil m
 
 ### 2.4 Tahap Preprocessing
 
-Preprocessing disusun konsisten untuk kedua model agar komparasi adil. Tahapan yang dilakukan mencakup pemisahan fitur numerik dan kategorikal, konversi nilai `inf/-inf` menjadi `NaN`, imputasi median pada fitur numerik, pengisian nilai kategorikal menggunakan token `MISSING/UNKNOWN` disertai konversi ke tipe `category`, serta perhitungan *balanced class weight* yang kemudian dikonversi menjadi `sample_weight`.
+Preprocessing disusun konsisten untuk kedua model agar komparasi adil. Tahapan yang dilakukan mencakup pemisahan fitur numerik dan kategorikal, konversi nilai `inf/-inf` menjadi `NaN`, imputasi median pada fitur numerik, pengisian nilai kategorikal menggunakan token `MISSING/UNKNOWN` disertai konversi ke tipe `category`, serta perhitungan *balanced class weight* yang kemudian dikonversi menjadi `sample_weight` (He & Garcia, 2009; Pedregosa et al., 2011).
 
 Pada data eksperimen, teridentifikasi 52 fitur numerik dan 2 fitur kategorikal. Strategi ini mempertahankan informasi kategorikal secara *native* tanpa *one-hot encoding*.
 
 ### 2.5 Konfigurasi Baseline Model
 
-Konfigurasi baseline dibuat sepadan: kompleksitas model 300 pohon/iterasi dengan *learning rate* 0,1 dan kedalaman 6.
+Konfigurasi baseline dibuat sepadan: kompleksitas model 300 pohon/iterasi dengan *learning rate* 0,1 dan kedalaman 6, mengacu pada prinsip komparasi model yang setara untuk *boosting ensemble* (Chen & Guestrin, 2016; Prokhorenkova et al., 2018).
 
 **Tabel 5. Konfigurasi Baseline XGBoost dan CatBoost**
 
@@ -119,7 +119,7 @@ Konfigurasi baseline dibuat sepadan: kompleksitas model 300 pohon/iterasi dengan
 Evaluasi utama dilakukan pada data uji (*hold-out test*) menggunakan metrik:
 Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu pelatihan, dan latensi inferensi per sampel.  
 Validasi tambahan dilakukan dengan 5-fold *Stratified Cross-Validation* menggunakan weighted F1.  
-Peringkat model ditetapkan dengan prioritas **F1 terlebih dahulu, lalu Recall**.
+Peringkat model ditetapkan dengan prioritas **F1 terlebih dahulu, lalu Recall**. Pemilihan metrik ini mempertimbangkan rekomendasi evaluasi pada data tidak seimbang, termasuk penggunaan F1, *balanced accuracy*, dan MCC agar penilaian tidak bias ke kelas mayoritas (Sokolova & Lapalme, 2009; Chicco & Jurman, 2020).
 
 ## 3. HASIL DAN PEMBAHASAN
 
@@ -181,7 +181,7 @@ Grafik waktu komputasi memperlihatkan perbandingan efisiensi pelatihan dan infer
 
 ### 3.4 Implikasi untuk Implementasi IDS
 
-Hasil penelitian menegaskan bahwa evaluasi IDS tidak cukup hanya berfokus pada accuracy. Untuk data *imbalanced*, metrik seperti Balanced Accuracy dan MCC perlu dijadikan komponen utama keputusan bersama F1/Recall. Kombinasi metrik performa prediksi dan metrik operasional (waktu pelatihan/inferensi) menghasilkan keputusan model yang lebih relevan untuk kebutuhan lapangan.
+Hasil penelitian menegaskan bahwa evaluasi IDS tidak cukup hanya berfokus pada accuracy. Untuk data *imbalanced*, metrik seperti Balanced Accuracy dan MCC perlu dijadikan komponen utama keputusan bersama F1/Recall (Sokolova & Lapalme, 2009; Chicco & Jurman, 2020). Kombinasi metrik performa prediksi dan metrik operasional (waktu pelatihan/inferensi) menghasilkan keputusan model yang lebih relevan untuk kebutuhan lapangan (Ring et al., 2019).
 
 ## 4. KETERBATASAN PENELITIAN
 
@@ -199,10 +199,23 @@ Penulis mengucapkan terima kasih kepada penyedia dataset NF-UNSW-NB15-v3 dan pla
 
 ## DAFTAR PUSTAKA
 
-[1] Sarhan, M., and Portmann, M., “NF-UNSW-NB15-v3 Dataset,” Kaggle, 2022. Available: https://www.kaggle.com/datasets/rachmanantaibnufajar/nf-unsw-nb15-v3 (accessed: 2026-04-02).  
-[2] Chen, T., and Guestrin, C., “XGBoost: A Scalable Tree Boosting System,” in *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD '16)*, 2016, pp. 785–794, doi: 10.1145/2939672.2939785.  
-[3] Prokhorenkova, L., Gusev, G., Vorobev, A. V., Dorogush, A. V., and Gulin, A., “CatBoost: Unbiased Boosting with Categorical Features,” in *Advances in Neural Information Processing Systems*, vol. 31, 2018, pp. 6638–6648.  
-[4] Pedregosa, F., et al., “Scikit-learn: Machine Learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011.
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 785–794). https://doi.org/10.1145/2939672.2939785
+
+Chicco, D., & Jurman, G. (2020). The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics, 21*(1), 6. https://doi.org/10.1186/s12864-019-6413-7
+
+He, H., & Garcia, E. A. (2009). Learning from imbalanced data. *IEEE Transactions on Knowledge and Data Engineering, 21*(9), 1263–1284. https://doi.org/10.1109/TKDE.2008.239
+
+Moustafa, N., & Slay, J. (2015). UNSW-NB15: A comprehensive data set for network intrusion detection systems (UNSW-NB15 network data set). In *2015 Military Communications and Information Systems Conference (MilCIS)* (pp. 1–6). IEEE. https://doi.org/10.1109/MilCIS.2015.7348942
+
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., Blondel, M., Prettenhofer, P., Weiss, R., Dubourg, V., Vanderplas, J., Passos, A., Cournapeau, D., Brucher, M., Perrot, M., & Duchesnay, E. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830.
+
+Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., & Gulin, A. (2018). CatBoost: Unbiased boosting with categorical features. In *Advances in Neural Information Processing Systems* (Vol. 31, pp. 6638–6648).
+
+Ring, M., Wunderlich, S., Scheuring, D., Landes, D., & Hotho, A. (2019). A survey of network-based intrusion detection data sets. *Computers & Security, 86*, 147–167. https://doi.org/10.1016/j.cose.2019.06.005
+
+Sarhan, M., Layeghy, S., Moustafa, N., Portmann, M., & Debie, E. (2021). NetFlow datasets for machine learning-based network intrusion detection systems. *IEEE Access, 9*, 78530–78550. https://doi.org/10.1109/ACCESS.2021.3085096
+
+Sokolova, M., & Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. *Information Processing & Management, 45*(4), 427–437. https://doi.org/10.1016/j.ipm.2009.03.002
 
 ---
 
