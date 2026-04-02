@@ -168,6 +168,39 @@ Secara praktis, hasil ini menunjukkan dua skenario pemilihan:
 
 Hasil penelitian menegaskan bahwa evaluasi IDS tidak cukup hanya berfokus pada accuracy. Untuk data *imbalanced*, metrik seperti Balanced Accuracy dan MCC perlu dijadikan komponen utama keputusan bersama F1/Recall. Kombinasi metrik performa prediksi dan metrik operasional (waktu pelatihan/inferensi) menghasilkan keputusan model yang lebih relevan untuk kebutuhan lapangan.
 
+### 3.5 Visualisasi Hasil (Gambar 1 dst)
+
+Bagian ini merangkum visualisasi yang dihasilkan pada notebook agar dapat langsung dipetakan ke layout jurnal. Urutan penomoran mengikuti urutan kemunculan output gambar pada cell.
+
+**Gambar 1. Distribusi Label Dataset NF-UNSW-NB15-v3 (Cell 6)**  
+Menunjukkan ketimpangan distribusi kelas yang sangat tinggi (dominasi kelas *Benign*). Visual ini digunakan untuk menegaskan tantangan *class imbalance* pada konteks IDS.
+
+**Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
+Memperlihatkan bahwa proporsi kelas train-test tetap konsisten setelah pembagian 80:20. Gambar ini mendukung validitas protokol evaluasi.
+
+**Gambar 3. Heatmap Metrik Detail per Kelas antar Model (Cell 19)**  
+Menyajikan perbandingan metrik per kelas (precision, recall, F1) untuk XGBoost dan CatBoost. Visual ini membantu identifikasi kelas serangan yang masih menantang.
+
+**Gambar 4. Bar Chart Metrik Utama Antar Model (Cell 21)**  
+Membandingkan metrik agregat utama (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC) secara ringkas. Digunakan untuk menunjukkan keunggulan umum XGBoost.
+
+**Gambar 5. Confusion Matrix (Raw Count) per Model (Cell 22, visual pertama)**  
+Menampilkan jumlah prediksi benar/salah per kelas untuk masing-masing model. Visual ini menunjukkan pola salah klasifikasi absolut.
+
+**Gambar 6. Confusion Matrix (Normalized) per Model (Cell 22, visual kedua)**  
+Menyajikan proporsi kesalahan/prediksi benar per kelas dalam skala relatif. Visual ini penting untuk membandingkan kemampuan model pada kelas minoritas.
+
+**Gambar 7. Grafik Waktu Komputasi (Training dan Inferensi) Antar Model (Cell 23)**  
+Membandingkan efisiensi komputasi kedua model, menegaskan CatBoost lebih cepat pada pelatihan maupun inferensi per sampel.
+
+**Gambar 8. Heatmap Komparasi Metrik Antar Model (Cell 25)**  
+Heatmap transpos untuk memudahkan pembacaan saat jumlah model sedikit. Visual ini merangkum posisi relatif kedua model pada metrik utama.
+
+**Catatan penempatan gambar pada naskah akhir:**  
+- Sisipkan file gambar hasil ekspor notebook di dekat paragraf analisis yang relevan.  
+- Gunakan caption final format jurnal: `Gambar X. Judul gambar`.  
+- Tambahkan sumber internal, misalnya: `Sumber: Hasil olahan penulis dari notebook analisis-komparatif-jurnal-sinta-4 (5).ipynb`.
+
 ## 4. KETERBATASAN PENELITIAN
 
 Beberapa keterbatasan yang perlu dicatat:
