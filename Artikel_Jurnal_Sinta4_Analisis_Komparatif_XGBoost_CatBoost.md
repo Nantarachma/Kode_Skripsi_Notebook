@@ -51,6 +51,9 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux, Python 3.12.12) dengan *rando
 
 Dataset yang digunakan adalah NF-UNSW-NB15-v3 dengan ukuran awal 2.365.424 baris dan 55 kolom. Audit awal menunjukkan 14.815 baris duplikat, total nilai hilang 63.425, dan 10 kelas pada label `Attack`. Distribusi label sangat tidak seimbang, dengan kelas *Benign* sebesar 94,60% dan kelas terkecil (*Worms*) hanya 0,01%.
 
+**Gambar 1. Distribusi Label Dataset NF-UNSW-NB15-v3 (Cell 6)**  
+Visual distribusi label menegaskan ketimpangan kelas yang tinggi, sehingga pemilihan metrik evaluasi tidak cukup hanya mengandalkan accuracy.
+
 **Tabel 2. Ringkasan Audit Dataset**
 
 | Metrik | Nilai |
@@ -80,6 +83,9 @@ Dataset yang digunakan adalah NF-UNSW-NB15-v3 dengan ukuran awal 2.365.424 baris
 
 Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah penghapusan duplikasi, tersisa 2.350.609 sampel dengan 54 fitur prediktor. Data dibagi secara *stratified* menjadi 80% data latih dan 20% data uji sehingga proporsi kelas train-test tetap konsisten.
 
+**Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
+Visual ini menunjukkan bahwa pembagian data menjaga komposisi kelas secara proporsional pada train dan test.
+
 **Tabel 4. Ringkasan Split Data**
 
 | Komponen | Nilai |
@@ -93,12 +99,7 @@ Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah p
 
 ### 2.4 Tahap Preprocessing
 
-Preprocessing disusun konsisten untuk kedua model agar komparasi adil:
-1. Pisah fitur numerik dan kategorikal.
-2. Ubah `inf/-inf` menjadi `NaN`.
-3. Imputasi median untuk fitur numerik.
-4. Isi nilai kategorikal dengan token `MISSING/UNKNOWN` dan konversi ke tipe `category`.
-5. Hitung *balanced class weight* lalu konversi ke `sample_weight`.
+Preprocessing disusun konsisten untuk kedua model agar komparasi adil. Tahapan yang dilakukan mencakup pemisahan fitur numerik dan kategorikal, konversi nilai `inf/-inf` menjadi `NaN`, imputasi median pada fitur numerik, pengisian nilai kategorikal menggunakan token `MISSING/UNKNOWN` disertai konversi ke tipe `category`, serta perhitungan *balanced class weight* yang kemudian dikonversi menjadi `sample_weight`.
 
 Pada data eksperimen, teridentifikasi 52 fitur numerik dan 2 fitur kategorikal. Strategi ini mempertahankan informasi kategorikal secara *native* tanpa *one-hot encoding*.
 
@@ -133,6 +134,12 @@ Peringkat model ditetapkan dengan prioritas **F1 terlebih dahulu, lalu Recall**.
 
 Berdasarkan prioritas ranking F1→Recall, model terbaik adalah **XGBoost**. Selisih performa terhadap CatBoost sebesar +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Nilai CV F1 yang sangat kecil deviasinya (std 0,0001 pada kedua model) menunjukkan konsistensi performa antarfold.
 
+**Gambar 3. Bar Chart Metrik Utama Antar Model (Cell 21)**  
+Bar chart memperlihatkan perbandingan metrik agregat utama secara ringkas dan menguatkan posisi XGBoost pada kualitas deteksi.
+
+**Gambar 4. Heatmap Komparasi Metrik Antar Model (Cell 25)**  
+Heatmap komparasi metrik memberikan ringkasan visual posisi relatif kedua model pada metrik utama.
+
 ### 3.2 Analisis Performa Per Kelas
 
 Kedua model mencapai F1 = 1,0000 pada kelas mayoritas (*Benign*), namun perbedaan menjadi jelas pada kelas minoritas. XGBoost cenderung lebih seimbang pada precision-recall kelas serangan, terutama pada kelas Backdoor, Exploits, Shellcode, dan Worms.
@@ -154,68 +161,37 @@ Kedua model mencapai F1 = 1,0000 pada kelas mayoritas (*Benign*), namun perbedaa
 
 Pada agregat *macro average*, XGBoost (0,7902) lebih tinggi dibanding CatBoost (0,6730), menegaskan keunggulan stabilitas antar-kelas saat data tidak seimbang. Pada *weighted average*, keduanya tinggi, namun XGBoost tetap unggul (0,9903 vs 0,9865).
 
+**Gambar 5. Heatmap Metrik Detail per Kelas antar Model (Cell 19)**  
+Heatmap metrik per kelas membantu menyoroti kelas serangan yang masih sulit dideteksi dan menunjukkan perbedaan performa XGBoost dan CatBoost pada level granular.
+
+**Gambar 6. Confusion Matrix (Raw Count) per Model (Cell 22, visual pertama)**  
+Confusion matrix mentah menampilkan pola salah klasifikasi absolut antarkelas pada masing-masing model.
+
+**Gambar 7. Confusion Matrix (Normalized) per Model (Cell 22, visual kedua)**  
+Confusion matrix ternormalisasi menyajikan proporsi kesalahan relatif sehingga lebih informatif untuk mengevaluasi kelas minoritas.
+
 ### 3.3 Trade-off Kualitas Deteksi vs Efisiensi
 
-Meskipun XGBoost unggul pada kualitas prediksi, CatBoost lebih cepat pada tahap pelatihan dan inferensi:
-- **Pelatihan tercepat**: CatBoost (34,386 s vs 54,995 s).
-- **Inferensi tercepat**: CatBoost (0,0017 ms/sampel vs 0,0042 ms/sampel).
+Meskipun XGBoost unggul pada kualitas prediksi, CatBoost lebih cepat pada tahap pelatihan dan inferensi. Waktu pelatihan CatBoost tercatat 34,386 detik, lebih cepat dibanding XGBoost 54,995 detik, dan latensi inferensinya juga lebih rendah yaitu 0,0017 ms/sampel dibanding 0,0042 ms/sampel pada XGBoost.
 
-Secara praktis, hasil ini menunjukkan dua skenario pemilihan:
-1. **Prioritas kualitas deteksi ancaman** (misalnya SOC dengan fokus minim *missed attack*): XGBoost lebih direkomendasikan.
-2. **Prioritas latensi/efisiensi komputasi** (misalnya deployment real-time dengan resource ketat): CatBoost layak dipilih.
+Secara praktis, temuan ini menunjukkan bahwa XGBoost lebih direkomendasikan ketika prioritas utama adalah kualitas deteksi ancaman dan meminimalkan *missed attack*, sedangkan CatBoost lebih layak dipilih ketika prioritas sistem adalah latensi rendah dan efisiensi komputasi untuk deployment real-time dengan sumber daya terbatas.
+
+**Gambar 8. Grafik Waktu Komputasi (Training dan Inferensi) Antar Model (Cell 23)**  
+Grafik waktu komputasi memperjelas trade-off antara kualitas prediksi dan efisiensi operasional kedua model.
 
 ### 3.4 Implikasi untuk Implementasi IDS
 
 Hasil penelitian menegaskan bahwa evaluasi IDS tidak cukup hanya berfokus pada accuracy. Untuk data *imbalanced*, metrik seperti Balanced Accuracy dan MCC perlu dijadikan komponen utama keputusan bersama F1/Recall. Kombinasi metrik performa prediksi dan metrik operasional (waktu pelatihan/inferensi) menghasilkan keputusan model yang lebih relevan untuk kebutuhan lapangan.
 
-### 3.5 Visualisasi Hasil (Gambar 1 dst)
-
-Bagian ini merangkum visualisasi yang dihasilkan pada notebook agar dapat langsung dipetakan ke layout jurnal. Urutan penomoran mengikuti urutan kemunculan output gambar pada cell.
-
-**Gambar 1. Distribusi Label Dataset NF-UNSW-NB15-v3 (Cell 6)**  
-Menunjukkan ketimpangan distribusi kelas yang sangat tinggi (dominasi kelas *Benign*). Visual ini digunakan untuk menegaskan tantangan *class imbalance* pada konteks IDS.
-
-**Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
-Memperlihatkan bahwa proporsi kelas train-test tetap konsisten setelah pembagian 80:20. Gambar ini mendukung validitas protokol evaluasi.
-
-**Gambar 3. Heatmap Metrik Detail per Kelas antar Model (Cell 19)**  
-Menyajikan perbandingan metrik per kelas (precision, recall, F1) untuk XGBoost dan CatBoost. Visual ini membantu identifikasi kelas serangan yang masih menantang.
-
-**Gambar 4. Bar Chart Metrik Utama Antar Model (Cell 21)**  
-Membandingkan metrik agregat utama (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC) secara ringkas. Digunakan untuk menunjukkan keunggulan umum XGBoost.
-
-**Gambar 5. Confusion Matrix (Raw Count) per Model (Cell 22, visual pertama)**  
-Menampilkan jumlah prediksi benar/salah per kelas untuk masing-masing model. Visual ini menunjukkan pola salah klasifikasi absolut.
-
-**Gambar 6. Confusion Matrix (Normalized) per Model (Cell 22, visual kedua)**  
-Menyajikan proporsi kesalahan/prediksi benar per kelas dalam skala relatif. Visual ini penting untuk membandingkan kemampuan model pada kelas minoritas.
-
-**Gambar 7. Grafik Waktu Komputasi (Training dan Inferensi) Antar Model (Cell 23)**  
-Membandingkan efisiensi komputasi kedua model, menegaskan CatBoost lebih cepat pada pelatihan maupun inferensi per sampel.
-
-**Gambar 8. Heatmap Komparasi Metrik Antar Model (Cell 25)**  
-Heatmap transpos untuk memudahkan pembacaan saat jumlah model sedikit. Visual ini merangkum posisi relatif kedua model pada metrik utama.
-
-**Catatan penempatan gambar pada naskah akhir:**  
-- Sisipkan file gambar hasil ekspor notebook di dekat paragraf analisis yang relevan.  
-- Gunakan caption final format jurnal: `Gambar X. Judul gambar`.  
-- Tambahkan sumber internal, misalnya: `Sumber: Hasil olahan penulis dari notebook analisis-komparatif-jurnal-sinta-4 (5).ipynb`.
-
 ## 4. KETERBATASAN PENELITIAN
 
-Beberapa keterbatasan yang perlu dicatat:
-1. Eksperimen masih pada konfigurasi baseline, belum mencakup *hyperparameter tuning* ekstensif.
-2. Studi hanya menggunakan satu dataset (NF-UNSW-NB15-v3), sehingga generalisasi lintas dataset belum diuji.
-3. Evaluasi berfokus pada metrik klasifikasi dan waktu komputasi, belum mencakup analisis konsumsi memori/energi saat deployment.
+Beberapa keterbatasan yang perlu dicatat adalah bahwa eksperimen masih berada pada konfigurasi baseline dan belum mencakup *hyperparameter tuning* secara ekstensif. Selain itu, studi ini hanya menggunakan satu dataset, yaitu NF-UNSW-NB15-v3, sehingga generalisasi lintas dataset belum dapat dipastikan. Evaluasi juga masih berfokus pada metrik klasifikasi dan waktu komputasi, serta belum memasukkan analisis konsumsi memori dan energi pada skenario deployment.
 
 ## 5. KESIMPULAN DAN SARAN
 
 Penelitian komparatif pada NF-UNSW-NB15-v3 menunjukkan bahwa **XGBoost** merupakan model terbaik berdasarkan prioritas F1→Recall, dengan F1 0,9903, Recall 0,9901, Balanced Accuracy 0,8547, MCC 0,9061, dan CV F1 0,9901±0,0001. **CatBoost** tetap kompetitif namun berada di bawah XGBoost pada kualitas deteksi (F1 0,9865), serta unggul pada efisiensi komputasi (pelatihan dan inferensi lebih cepat).
 
-Untuk pengembangan penelitian selanjutnya disarankan:
-1. melakukan *hyperparameter optimization* terstruktur untuk kedua model,
-2. menambah uji lintas dataset IDS agar validitas eksternal meningkat, dan
-3. menambahkan evaluasi aspek operasional lanjutan (memori, throughput, dan stabilitas inferensi jangka panjang).
+Untuk pengembangan penelitian selanjutnya, disarankan melakukan *hyperparameter optimization* yang lebih terstruktur pada kedua model, menambah uji lintas dataset IDS untuk meningkatkan validitas eksternal, serta menambahkan evaluasi aspek operasional lanjutan seperti memori, throughput, dan stabilitas inferensi jangka panjang.
 
 ## UCAPAN TERIMA KASIH
 
@@ -231,6 +207,4 @@ Penulis mengucapkan terima kasih kepada penyedia dataset NF-UNSW-NB15-v3 dan pla
 ---
 
 **Catatan finalisasi sebelum submit jurnal:**  
-- Lengkapi identitas penulis, afiliasi, dan email korespondensi.  
-- Samakan gaya sitasi dan format tabel/gambar sesuai template jurnal tujuan (Sinta 4).  
-- Tambahkan nomor dan caption final untuk seluruh tabel/gambar saat layout di dokumen akhir.
+Sebelum submit, lengkapi identitas penulis, afiliasi, dan email korespondensi, samakan gaya sitasi serta format tabel/gambar sesuai template jurnal tujuan (Sinta 4), dan pastikan seluruh tabel/gambar telah memiliki nomor serta caption final saat layout dokumen akhir.
