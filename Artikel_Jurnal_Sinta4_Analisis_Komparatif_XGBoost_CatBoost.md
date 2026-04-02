@@ -86,10 +86,10 @@ Penulis mengucapkan terima kasih kepada pihak yang menyediakan lingkungan eksper
 
 ## DAFTAR PUSTAKA
 
-[1] Sarhan, M., et al., “NetFlow Datasets for Machine Learning-Based Network Intrusion Detection Systems,” 2022.  
-[2] Chen, T., and Guestrin, C., “XGBoost: A Scalable Tree Boosting System,” *KDD*, 2016.  
-[3] Prokhorenkova, L., et al., “CatBoost: unbiased boosting with categorical features,” *NeurIPS*, 2018.  
-[4] Pedregosa, F., et al., “Scikit-learn: Machine Learning in Python,” *JMLR*, 2011.
+[1] Sarhan, M., and Portmann, M., “NF-UNSW-NB15-v3 Dataset,” Kaggle, 2022. Available: https://www.kaggle.com/datasets/rachmanantaibnufajar/nf-unsw-nb15-v3 (accessed: 2026-04-02).  
+[2] Chen, T., and Guestrin, C., “XGBoost: A Scalable Tree Boosting System,” in *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD '16)*, 2016, pp. 785–794, doi: 10.1145/2939672.2939785.  
+[3] Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., and Gulin, A., “CatBoost: Unbiased Boosting with Categorical Features,” in *Advances in Neural Information Processing Systems (NeurIPS 2018)*, vol. 31, 2018, pp. 6638–6648.  
+[4] Pedregosa, F., et al., “Scikit-learn: Machine Learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011.
 
 ---
 
