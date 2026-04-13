@@ -7,31 +7,31 @@ Email: penulis@domain.ac.id
 
 ## ABSTRAK
 
-Penelitian ini membahas kebutuhan model *Intrusion Detection System* (IDS) yang mampu mempertahankan kualitas deteksi tinggi pada data lalu lintas jaringan berskala besar dan tidak seimbang. Tujuan penelitian adalah membandingkan performa dua algoritma *gradient boosting* (XGBoost dan CatBoost) pada dataset NF-UNSW-NB15-v3. Eksperimen dijalankan pada skenario klasifikasi multikelas (10 kelas) dengan *stratified train-test split* 80:20, *preprocessing* numerik-kategorikal berbasis imputasi median dan *native categorical handling*, serta *class weighting* untuk mengatasi *class imbalance*. Evaluasi mencakup Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu pelatihan, waktu inferensi per sampel, serta validasi 5-fold *cross-validation* berbasis weighted F1. Hasil menunjukkan XGBoost unggul pada kualitas prediksi (Accuracy 0,9901; Balanced Accuracy 0,8547; Precision 0,9915; Recall 0,9901; F1 0,9903; MCC 0,9061; ROC-AUC 0,9999; CV F1 0,9901±0,0001), sedangkan CatBoost sedikit lebih rendah pada kualitas deteksi (F1 0,9865) tetapi lebih unggul pada efisiensi komputasi (waktu pelatihan 34,386 detik; inferensi 0,0017 ms/sampel). Temuan ini menunjukkan bahwa XGBoost lebih sesuai ketika prioritas utama adalah ketepatan deteksi ancaman, sementara CatBoost lebih relevan ketika kebutuhan utama adalah latensi inferensi dan efisiensi komputasi.
+Penelitian ini menyajikan komparasi menyeluruh dua algoritma *gradient boosting* (XGBoost dan CatBoost) untuk tugas *Intrusion Detection System* (IDS) multikelas pada dataset NF-UNSW-NB15-v3 yang sangat tidak seimbang. Protokol eksperimen dibuat reproduksibel pada Kaggle Notebook (Python 3.12.12, seed 42), dengan deteksi akselerasi GPU per model dan *fallback* CPU otomatis. Pemanggilan data dilakukan melalui auto-discovery `/kaggle/input` dan jalur lokal, sedangkan preprocessing diseragamkan melalui imputasi median untuk fitur numerik, penanganan kategori *native* (`MISSING/UNKNOWN`), dan *balanced class weighting*. Evaluasi meliputi metrik hold-out (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC), efisiensi komputasi (waktu pelatihan, total inferensi, latensi inferensi/sampel), validasi 5-fold *Stratified Cross-Validation* (weighted F1), serta analisis detail per kelas menggunakan *classification report* penuh dan confusion matrix. Hasil menunjukkan XGBoost menjadi model terbaik berdasarkan prioritas ranking F1→Recall dengan Accuracy 0,9901; Balanced Accuracy 0,8547; Precision 0,9915; Recall 0,9901; F1 0,9903; MCC 0,9061; ROC-AUC 0,9999; CV F1 0,9901±0,0001. CatBoost memiliki kualitas prediksi sedikit lebih rendah (F1 0,9865), tetapi lebih efisien (pelatihan 34,386 detik vs 54,995 detik; inferensi 0,0017 ms/sampel vs 0,0042 ms/sampel). Pada level per kelas, XGBoost lebih konsisten di kelas minoritas pada sebagian besar metrik, sedangkan CatBoost kompetitif untuk skenario yang menuntut latensi sangat rendah.
 
 **Kata kunci**: deteksi intrusi, XGBoost, CatBoost, NF-UNSW-NB15-v3, klasifikasi multikelas
 
 ## ABSTRACT
 
-This study addresses the need for an Intrusion Detection System (IDS) model that can maintain high detection quality on large-scale and imbalanced network traffic data. The objective is to compare two gradient boosting algorithms (XGBoost and CatBoost) on the NF-UNSW-NB15-v3 dataset. The experiment uses a multiclass classification setting (10 classes) with an 80:20 stratified train-test split, numerical-categorical preprocessing via median imputation and native categorical handling, and class weighting to mitigate class imbalance. Evaluation includes Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, training time, inference time per sample, and 5-fold weighted F1 cross-validation. Results indicate that XGBoost outperforms CatBoost in predictive quality (Accuracy 0.9901, Balanced Accuracy 0.8547, Precision 0.9915, Recall 0.9901, F1 0.9903, MCC 0.9061, ROC-AUC 0.9999, CV F1 0.9901±0.0001), while CatBoost is superior in computational efficiency (34.386 seconds training, 0.0017 ms/sample inference) despite slightly lower detection quality (F1 0.9865). The findings suggest XGBoost is preferable when detection effectiveness is the top priority, whereas CatBoost is a practical option when computational efficiency and low latency are prioritized.
+This study provides a comprehensive comparison of two gradient boosting algorithms (XGBoost and CatBoost) for multiclass Intrusion Detection System (IDS) modeling on the highly imbalanced NF-UNSW-NB15-v3 dataset. A reproducible protocol is implemented in Kaggle Notebook (Python 3.12.12, seed 42), including per-model GPU detection with automatic CPU fallback. Data loading uses auto-discovery from `/kaggle/input` and local paths, while preprocessing is standardized with median imputation for numeric features, native categorical handling (`MISSING/UNKNOWN`), and balanced class weighting. Evaluation covers hold-out metrics (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC), computational efficiency (training time, total inference time, inference latency per sample), 5-fold stratified weighted-F1 cross-validation, and class-level analysis through full classification reports and confusion matrices. Results show XGBoost as the top-ranked model by F1→Recall priority with Accuracy 0.9901, Balanced Accuracy 0.8547, Precision 0.9915, Recall 0.9901, F1 0.9903, MCC 0.9061, ROC-AUC 0.9999, and CV F1 0.9901±0.0001. CatBoost yields slightly lower detection quality (F1 0.9865) but better computational efficiency (34.386 s vs 54.995 s training; 0.0017 ms/sample vs 0.0042 ms/sample inference). At the class level, XGBoost is generally more consistent on minority classes, while CatBoost remains practical for low-latency deployment needs.
 
 **Keywords**: intrusion detection, XGBoost, CatBoost, NF-UNSW-NB15-v3, multiclass classification
 
 ## 1. PENDAHULUAN
 
-Pertumbuhan lalu lintas jaringan modern meningkatkan kompleksitas pola serangan dan menuntut sistem deteksi intrusi yang akurat, stabil pada kelas minoritas, serta efisien untuk implementasi operasional. Pada konteks ini, model *gradient boosting* menjadi kandidat kuat karena kemampuan pemodelan nonlinier, robust terhadap heterogenitas fitur, dan dukungan akselerasi komputasi.
+Pertumbuhan lalu lintas jaringan dan kompleksitas pola serangan menuntut IDS yang tidak hanya akurat secara global, tetapi juga stabil pada kelas serangan minoritas (Ring et al., 2019). Model *gradient boosting* seperti XGBoost dan CatBoost relevan karena mampu menangani hubungan nonlinier, heterogenitas fitur, dan skenario data besar (Chen & Guestrin, 2016; Prokhorenkova et al., 2018).
 
-Dataset NF-UNSW-NB15-v3 dipilih karena merepresentasikan kondisi realistis data jaringan skala besar dengan distribusi kelas yang sangat timpang. Karakteristik tersebut penting untuk menguji tidak hanya performa rata-rata model, tetapi juga kemampuan model mendeteksi kelas serangan minoritas.
+Dataset NF-UNSW-NB15-v3 dipilih karena merepresentasikan distribusi serangan yang sangat tidak seimbang pada konteks lalu lintas jaringan realistis (Moustafa & Slay, 2015; Sarhan et al., 2021). Pada kondisi ini, penggunaan metrik tunggal seperti accuracy berisiko menutupi performa buruk pada kelas minoritas, sehingga metrik seperti Balanced Accuracy, F1, Recall, dan MCC menjadi penting (He & Garcia, 2009; Chicco & Jurman, 2020).
 
-Penelitian ini berfokus pada komparasi baseline XGBoost dan CatBoost menggunakan protokol evaluasi yang setara dan reproduksibel. Kontribusi penelitian meliputi: (1) evaluasi kuantitatif dua model pada skenario multikelas 10 kelas yang sama, (2) analisis gabungan metrik kualitas deteksi dan metrik efisiensi komputasi, serta (3) penyusunan dasar keputusan pemilihan model IDS sesuai kebutuhan implementasi.
+Penelitian ini berkontribusi pada: (1) pelaporan lengkap hasil komparasi baseline XGBoost vs CatBoost dari sisi kualitas prediksi dan efisiensi komputasi, (2) pelaporan granular per kelas (precision, recall, F1, support), dan (3) formulasi keputusan pemilihan model berdasarkan prioritas F1→Recall yang relevan untuk kebutuhan IDS.
 
 ## 2. METODE PENELITIAN
 
-### 2.1 Lingkungan Eksperimen dan Reprodusibilitas
+### 2.1 Lingkungan Eksperimen, Reprodusibilitas, dan Deteksi Device
 
-Eksperimen dijalankan pada Kaggle Notebook (Linux, Python 3.12.12) dengan *random seed* 42. Akselerasi GPU terdeteksi aktif untuk XGBoost dan CatBoost. Ringkasan lingkungan disajikan pada Tabel 1.
+Eksperimen dilakukan pada Kaggle Notebook (Linux 6.6.113+, Python 3.12.12) dengan seed 42. Notebook mendeteksi ketersediaan GPU untuk masing-masing model (`detect_xgboost_gpu`, `detect_catboost_gpu`) dan menetapkan parameter perangkat melalui `GPU_PARAMS` dengan *fallback* ke CPU bila GPU tidak tersedia.
 
-**Tabel 1. Ringkasan Lingkungan Eksperimen**
+**Tabel 1. Ringkasan lingkungan eksperimen**
 
 | Komponen | Nilai |
 |---|---|
@@ -47,14 +47,13 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux, Python 3.12.12) dengan *rando
 | xgboost | 3.2.0 |
 | catboost | 1.2.10 |
 
-### 2.2 Dataset dan Audit Awal
+Tabel 1 menegaskan bahwa eksperimen dijalankan pada lingkungan yang terdokumentasi jelas, sehingga hasil dapat direplikasi dengan konfigurasi perangkat lunak yang setara.
 
-Dataset yang digunakan adalah NF-UNSW-NB15-v3 dengan ukuran awal 2.365.424 baris dan 55 kolom. Audit awal menunjukkan 14.815 baris duplikat, total nilai hilang 63.425, dan 10 kelas pada label `Attack`. Distribusi label sangat tidak seimbang, dengan kelas *Benign* sebesar 94,60% dan kelas terkecil (*Worms*) hanya 0,01%.
+### 2.2 Pemanggilan Dataset dan Audit Awal
 
-**Gambar 1. Distribusi Label Dataset NF-UNSW-NB15-v3 (Cell 6)**  
-Visual distribusi label menegaskan ketimpangan kelas yang sangat tinggi. Dominasi kelas *Benign* terlihat jelas, sedangkan kelas serangan seperti *Worms*, *Analysis*, dan *Shellcode* memiliki proporsi sangat kecil. Kondisi ini menunjukkan potensi bias model ke kelas mayoritas jika evaluasi hanya memakai metrik global, sehingga metrik yang lebih peka terhadap ketidakseimbangan kelas seperti Balanced Accuracy, Recall per kelas, F1, dan MCC perlu dijadikan acuan utama.
+Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke jalur lokal (`./`, `./data`, `./dataset`) agar pipeline tetap berjalan lintas lingkungan. Dataset yang digunakan memiliki ukuran 2.365.424 baris × 55 kolom.
 
-**Tabel 2. Ringkasan Audit Dataset**
+**Tabel 2. Ringkasan audit dataset awal**
 
 | Metrik | Nilai |
 |---|---:|
@@ -63,8 +62,21 @@ Visual distribusi label menegaskan ketimpangan kelas yang sangat tinggi. Dominas
 | Duplikat awal | 14.815 |
 | Nilai hilang total | 63.425 |
 | Jumlah kelas | 10 |
+| Imbalance ratio (Benign/Worms) | 14.162,85x |
 
-**Tabel 3. Distribusi Label (Sebelum Split)**
+Tabel 2 menunjukkan skala data yang besar sekaligus ketidakseimbangan kelas yang tinggi, sehingga pemilihan metrik evaluasi dan strategi penanganan *imbalance* menjadi krusial.
+
+**Tabel 3. Komposisi tipe data**
+
+| Tipe data | Jumlah kolom |
+|---|---:|
+| int64 | 49 |
+| object | 3 |
+| float64 | 3 |
+
+Tabel 3 memperlihatkan dominasi fitur numerik, yang menjadi dasar penggunaan imputasi median serta perlakuan khusus hanya pada sebagian kecil fitur kategorikal.
+
+**Tabel 4. Distribusi label sebelum split**
 
 | Kelas | Jumlah | Proporsi (%) |
 |---|---:|---:|
@@ -79,14 +91,13 @@ Visual distribusi label menegaskan ketimpangan kelas yang sangat tinggi. Dominas
 | Analysis | 1.226 | 0,05 |
 | Worms | 158 | 0,01 |
 
-### 2.3 Skenario Eksperimen dan Split Data
+Tabel 4 menegaskan dominasi kelas *Benign* dan kecilnya proporsi kelas serangan langka, sehingga evaluasi harus menekankan metrik yang sensitif terhadap performa antar kelas.
 
-Eksperimen ditetapkan pada skenario klasifikasi multikelas (10 kelas). Setelah penghapusan duplikasi, tersisa 2.350.609 sampel dengan 54 fitur prediktor. Data dibagi secara *stratified* menjadi 80% data latih dan 20% data uji sehingga proporsi kelas train-test tetap konsisten.
+### 2.3 Skenario Eksperimen dan Stratified Split
 
-**Gambar 2. Distribusi Kelas pada Data Train dan Test setelah Stratified Split (Cell 8)**  
-Visual ini menunjukkan bahwa pembagian data dengan *stratified split* berhasil mempertahankan komposisi tiap kelas secara proporsional antara data latih dan data uji. Konsistensi distribusi tersebut penting untuk menghindari pergeseran distribusi kelas antar subset yang dapat menimbulkan estimasi performa bias. Dengan demikian, perbandingan performa XGBoost dan CatBoost pada tahap evaluasi menjadi lebih valid karena kedua model diuji pada kondisi distribusi yang representatif terhadap data latihnya.
+Setelah penghapusan duplikasi, data dibagi dengan *stratified train-test split* (80:20). Label di-*encode* menggunakan `LabelEncoder` untuk skenario multikelas 10 kelas.
 
-**Tabel 4. Ringkasan Split Data**
+**Tabel 5. Ringkasan skenario dan split data**
 
 | Komponen | Nilai |
 |---|---|
@@ -97,112 +108,236 @@ Visual ini menunjukkan bahwa pembagian data dengan *stratified split* berhasil m
 | Ukuran train | 1.880.487 × 54 |
 | Ukuran test | 470.122 × 54 |
 
-### 2.4 Tahap Preprocessing
+Tabel 5 merangkum skenario eksperimen setelah pembersihan data dan memastikan pembagian data cukup besar untuk pelatihan serta evaluasi hold-out yang stabil.
 
-Preprocessing disusun konsisten untuk kedua model agar komparasi adil. Tahapan yang dilakukan mencakup pemisahan fitur numerik dan kategorikal, konversi nilai `inf/-inf` menjadi `NaN`, imputasi median pada fitur numerik, pengisian nilai kategorikal menggunakan token `MISSING/UNKNOWN` disertai konversi ke tipe `category`, serta perhitungan *balanced class weight* yang kemudian dikonversi menjadi `sample_weight`.
+**Tabel 6. Validasi proporsi kelas train vs test**
 
-Pada data eksperimen, teridentifikasi 52 fitur numerik dan 2 fitur kategorikal. Strategi ini mempertahankan informasi kategorikal secara *native* tanpa *one-hot encoding*.
+| Kelas | Train (%) | Test (%) |
+|---|---:|---:|
+| Analysis | 0,05 | 0,05 |
+| Backdoor | 0,20 | 0,20 |
+| Benign | 94,57 | 94,57 |
+| DoS | 0,25 | 0,25 |
+| Exploits | 1,82 | 1,82 |
+| Fuzzers | 1,44 | 1,44 |
+| Generic | 0,84 | 0,84 |
+| Reconnaissance | 0,73 | 0,73 |
+| Shellcode | 0,10 | 0,10 |
+| Worms | 0,01 | 0,01 |
+
+Tabel 6 mengonfirmasi bahwa *stratified split* menjaga distribusi kelas train dan test tetap konsisten, sehingga bias pembagian data dapat diminimalkan.
+
+### 2.4 Preprocessing dan Penanganan Imbalance
+
+Pipeline preprocessing dibuat identik untuk kedua model: (1) pemisahan fitur numerik-kategorikal, (2) konversi `inf/-inf` menjadi `NaN`, (3) imputasi median untuk numerik, (4) imputasi kategorikal (`MISSING`) dan pemetaan kategori tak terlihat pada data uji ke `UNKNOWN`, serta (5) perhitungan *balanced class weight* menjadi `sample_weight` pada proses *fit* (He & Garcia, 2009; Pedregosa et al., 2011).
+
+**Tabel 7. Ringkasan preprocessing**
+
+| Komponen | Nilai |
+|---|---|
+| Jumlah fitur awal | 54 |
+| Jumlah fitur kategorikal | 2 |
+| Jumlah fitur numerik | 52 |
+| Strategi imputasi numerik | Median |
+| Strategi imputasi kategorikal | MISSING / UNKNOWN |
+
+Tabel 7 menegaskan keseragaman pipeline praproses untuk kedua model, sehingga perbedaan hasil lebih merefleksikan karakter model daripada perbedaan perlakuan data.
+
+**Tabel 8. Class weight (encoded class)**
+
+| Encoded Class | Label | Class Weight |
+|---:|---|---:|
+| 0 | Analysis | 191,6908 |
+| 1 | Backdoor | 50,4693 |
+| 2 | Benign | 0,1057 |
+| 3 | DoS | 39,3654 |
+| 4 | Exploits | 5,4993 |
+| 5 | Fuzzers | 6,9511 |
+| 6 | Generic | 11,9616 |
+| 7 | Reconnaissance | 13,7674 |
+| 8 | Shellcode | 98,7132 |
+| 9 | Worms | 1492,4500 |
+
+Tabel 8 memperlihatkan bobot tinggi pada kelas minoritas, yang dirancang untuk menekan bias model terhadap kelas mayoritas saat proses pelatihan.
 
 ### 2.5 Konfigurasi Baseline Model
 
-Konfigurasi baseline dibuat sepadan: kompleksitas model 300 pohon/iterasi dengan *learning rate* 0,1 dan kedalaman 6.
+**Tabel 9. Konfigurasi baseline aktual pada notebook**
 
-**Tabel 5. Konfigurasi Baseline XGBoost dan CatBoost**
+| Komponen | XGBoost | CatBoost |
+|---|---|---|
+| Estimator | XGBClassifier | CatBoostClassifier |
+| n_estimators/iterations | 300 | 300 |
+| learning_rate | 0,1 | 0,1 |
+| depth/max_depth | 6 | 6 |
+| subsample | 0,9 | - |
+| colsample_bytree | 0,9 | - |
+| objective/loss | `multi:softprob` | `MultiClass` |
+| eval_metric | `mlogloss` | default internal |
+| Penanganan fitur kategorikal | `enable_categorical=True` | `cat_features` saat fit |
+| Device | `cuda` | `GPU` |
 
-| Model | Estimator | n_estimators/iterations | learning_rate | depth/max_depth | Device | Penanganan kategori |
-|---|---|---:|---:|---:|---|---|
-| XGBoost | XGBClassifier | 300 | 0,1 | 6 | cuda | `enable_categorical=True` |
-| CatBoost | CatBoostClassifier | 300 | 0,1 | 6 | GPU | `cat_features` saat fit |
+Tabel 9 menunjukkan konfigurasi baseline yang sebanding antar model, sehingga komparasi performa dapat diinterpretasikan secara lebih adil.
 
 ### 2.6 Protokol Evaluasi
 
-Evaluasi utama dilakukan pada data uji (*hold-out test*) menggunakan metrik:
-Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu pelatihan, dan latensi inferensi per sampel.  
-Validasi tambahan dilakukan dengan 5-fold *Stratified Cross-Validation* menggunakan weighted F1.  
-Peringkat model ditetapkan dengan prioritas **F1 terlebih dahulu, lalu Recall**.
+Evaluasi dilakukan pada data uji (hold-out) menggunakan Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu pelatihan, waktu inferensi total, dan latensi inferensi per sampel. Validasi tambahan memakai 5-fold *Stratified Cross-Validation* dengan weighted F1. Ranking model ditetapkan berdasarkan prioritas **F1 lalu Recall** (Sokolova & Lapalme, 2009; Chicco & Jurman, 2020).
 
 ## 3. HASIL DAN PEMBAHASAN
 
-### 3.1 Hasil Komparasi Utama
+### 3.1 Hasil Kuantitatif Utama (Hold-out + CV)
 
-**Tabel 6. Hasil Komparasi Utama XGBoost vs CatBoost**
+**Tabel 10. Komparasi utama model (diurutkan F1→Recall)**
 
-| Model | Accuracy | Balanced Accuracy | Precision | Recall | F1 | MCC | ROC-AUC | CV F1 (mean±std) | Train Time (s) | Infer/Sample (ms) |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| XGBoost | 0,9901 | 0,8547 | 0,9915 | 0,9901 | 0,9903 | 0,9061 | 0,9999 | 0,9901 ± 0,0001 | 54,995 | 0,0042 |
-| CatBoost | 0,9861 | 0,8361 | 0,9894 | 0,9861 | 0,9865 | 0,8677 | 0,9999 | 0,9863 ± 0,0001 | 34,386 | 0,0017 |
+| Rank | Model | Accuracy | Balanced Accuracy | Precision | Recall | F1 | MCC | ROC-AUC | CV F1 (mean±std) | Train Time (s) | Infer Total (s) | Infer/Sample (ms) |
+|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 1 | XGBoost | 0,9901 | 0,8547 | 0,9915 | 0,9901 | 0,9903 | 0,9061 | 0,9999 | 0,9901 ± 0,0001 | 54,995 | 1,9896 | 0,0042 |
+| 2 | CatBoost | 0,9861 | 0,8361 | 0,9894 | 0,9861 | 0,9865 | 0,8677 | 0,9999 | 0,9863 ± 0,0001 | 34,386 | 0,7874 | 0,0017 |
 
-Berdasarkan prioritas ranking F1→Recall, model terbaik adalah **XGBoost**. Selisih performa terhadap CatBoost sebesar +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Nilai CV F1 yang sangat kecil deviasinya (std 0,0001 pada kedua model) menunjukkan konsistensi performa antarfold.
+XGBoost unggul pada seluruh metrik kualitas deteksi inti, sedangkan CatBoost unggul pada efisiensi komputasi. Selisih utama XGBoost terhadap CatBoost adalah +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Standar deviasi CV F1 keduanya sama-sama rendah (0,0001), menandakan stabilitas lintas fold.
 
-**Gambar 3. Bar Chart Metrik Utama Antar Model (Cell 21)**  
-Bar chart memperlihatkan perbandingan metrik agregat utama secara langsung sehingga perbedaan performa antarmodel dapat dibaca cepat pada satu bidang visual. Terlihat bahwa XGBoost unggul tipis namun konsisten pada metrik kualitas deteksi, khususnya F1, Recall, Balanced Accuracy, dan MCC, yang relevan untuk skenario data tidak seimbang. Gambar ini memperkuat hasil tabular bahwa keunggulan XGBoost bukan hanya pada satu metrik, tetapi pada kombinasi metrik yang merepresentasikan ketepatan klasifikasi dan stabilitas prediksi.
+**Gambar 1. Bar chart metrik utama antar model (Cell 21).**  
+Bar chart horizontal membandingkan Accuracy, Balanced Accuracy, Precision, Recall, F1, dan ROC-AUC untuk XGBoost dan CatBoost (sumbu-x: skor 0–1; sumbu-y: metrik). Visual ini menegaskan keunggulan konsisten XGBoost pada metrik kualitas deteksi utama.
 
-**Gambar 4. Heatmap Komparasi Metrik Antar Model (Cell 25)**  
-Heatmap komparasi metrik menyajikan posisi relatif kedua model dalam format intensitas warna sehingga pola keunggulan dapat diidentifikasi secara cepat dan menyeluruh. Dengan tampilan terstruktur per metrik, pembaca dapat melihat bahwa XGBoost cenderung memiliki nilai lebih tinggi pada metrik kualitas deteksi, sementara CatBoost tetap kompetitif pada metrik umum tertentu. Representasi ini membantu menyederhanakan interpretasi banyak metrik sekaligus tanpa kehilangan konteks komparatif antar model.
+**Gambar 2. Heatmap komparasi metrik agregat model (Cell 25).**  
+Heatmap menampilkan metrik agregat (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, CV F1 mean) per model, dengan intensitas warna merepresentasikan besar skor (semakin gelap semakin tinggi). Visual ini mempermudah pembacaan posisi relatif kedua model pada banyak metrik sekaligus.
 
-### 3.2 Analisis Performa Per Kelas
+### 3.2 Pemenang per Aspek Evaluasi dan Trade-off Operasional
 
-Kedua model mencapai F1 = 1,0000 pada kelas mayoritas (*Benign*), namun perbedaan menjadi jelas pada kelas minoritas. XGBoost cenderung lebih seimbang pada precision-recall kelas serangan, terutama pada kelas Backdoor, Exploits, Shellcode, dan Worms.
+**Tabel 11. Pemenang per aspek**
 
-**Tabel 7. Perbandingan F1 Per Kelas (XGBoost vs CatBoost)**
+| Aspek | Model pemenang |
+|---|---|
+| Accuracy tertinggi | XGBoost |
+| Balanced Accuracy tertinggi | XGBoost |
+| MCC tertinggi | XGBoost |
+| Training tercepat | CatBoost |
+| Inferensi tercepat | CatBoost |
+| Peringkat akhir (F1→Recall) | XGBoost |
 
-| Kelas | Support (test) | F1 XGBoost | F1 CatBoost | ΔF1 (XGB-CB) |
+CatBoost ~37,47% lebih cepat saat training dan ~59,52% lebih cepat pada latensi inferensi per sampel. Namun, untuk konteks IDS yang menekankan minimisasi *missed attack* pada kelas minoritas, keunggulan XGBoost pada Balanced Accuracy dan MCC memberi justifikasi pemilihan model utama.
+
+**Gambar 3. Grafik waktu training dan inferensi (Cell 23).**  
+Visual terdiri dari dua panel: waktu pelatihan (detik) dan latensi inferensi per sampel (milidetik), dengan sumbu-x sebagai nilai waktu dan sumbu-y sebagai model. Grafik ini memperjelas sisi efisiensi operasional kedua model.
+
+### 3.3 Laporan Klasifikasi Lengkap per Model
+
+#### 3.3.1 Classification Report – XGBoost
+
+**Tabel 12. Metrik per kelas XGBoost**
+
+| Kelas | Precision | Recall | F1-Score | Support |
 |---|---:|---:|---:|---:|
-| Analysis | 245 | 0,5837 | 0,4563 | +0,1274 |
-| Backdoor | 932 | 0,9378 | 0,7588 | +0,1790 |
-| Benign | 444.586 | 1,0000 | 1,0000 | +0,0000 |
-| DoS | 1.194 | 0,5547 | 0,4361 | +0,1186 |
-| Exploits | 8.549 | 0,7959 | 0,7057 | +0,0902 |
-| Fuzzers | 6.763 | 0,8513 | 0,8042 | +0,0471 |
-| Generic | 3.930 | 0,9260 | 0,8911 | +0,0349 |
-| Reconnaissance | 3.415 | 0,8025 | 0,7566 | +0,0459 |
-| Shellcode | 476 | 0,7314 | 0,5999 | +0,1315 |
-| Worms | 32 | 0,7188 | 0,3218 | +0,3970 |
+| Analysis | 0,4278 | 0,9184 | 0,5837 | 245 |
+| Backdoor | 0,9368 | 0,9388 | 0,9378 | 932 |
+| Benign | 1,0000 | 1,0000 | 1,0000 | 444.586 |
+| DoS | 0,4582 | 0,7027 | 0,5547 | 1.194 |
+| Exploits | 0,9223 | 0,7000 | 0,7959 | 8.549 |
+| Fuzzers | 0,7963 | 0,9145 | 0,8513 | 6.763 |
+| Generic | 0,9485 | 0,9046 | 0,9260 | 3.930 |
+| Reconnaissance | 0,7972 | 0,8079 | 0,8025 | 3.415 |
+| Shellcode | 0,5981 | 0,9412 | 0,7314 | 476 |
+| Worms | 0,7188 | 0,7188 | 0,7188 | 32 |
+| macro avg | 0,7604 | 0,8547 | 0,7902 | 470.122 |
+| weighted avg | 0,9915 | 0,9901 | 0,9903 | 470.122 |
 
-Pada agregat *macro average*, XGBoost (0,7902) lebih tinggi dibanding CatBoost (0,6730), menegaskan keunggulan stabilitas antar-kelas saat data tidak seimbang. Pada *weighted average*, keduanya tinggi, namun XGBoost tetap unggul (0,9903 vs 0,9865).
+Tabel 12 menunjukkan XGBoost relatif stabil pada mayoritas kelas dan tetap kompetitif pada kelas minoritas, dengan *weighted average* yang sangat tinggi.
 
-**Gambar 5. Heatmap Metrik Detail per Kelas antar Model (Cell 19)**  
-Heatmap metrik detail per kelas memperlihatkan variasi precision, recall, dan F1 pada masing-masing kelas serangan, sehingga kelemahan model tidak tertutup oleh skor agregat. Visual ini menunjukkan bahwa kelas minoritas masih menjadi area paling menantang. Meski demikian, XGBoost tampak lebih stabil daripada CatBoost pada beberapa kelas penting seperti *Backdoor*, *Exploits*, dan *Shellcode*, sehingga evaluasi granular per kelas tetap krusial untuk menilai kesiapan model IDS pada distribusi serangan yang tidak merata.
+#### 3.3.2 Classification Report – CatBoost
 
-**Gambar 6. Confusion Matrix (Raw Count) per Model (Cell 22, visual pertama)**  
-Confusion matrix mentah menampilkan jumlah prediksi benar dan salah secara absolut untuk setiap pasangan kelas aktual-prediksi pada masing-masing model. Visual ini membantu mengidentifikasi kelas mana yang paling sering tertukar, serta menunjukkan skala kesalahan nyata yang terjadi pada data uji. Informasi absolut ini penting untuk analisis operasional karena memberikan gambaran langsung tentang volume *false positive* dan *false negative* yang mungkin berdampak pada beban investigasi di lingkungan IDS.
+**Tabel 13. Metrik per kelas CatBoost**
 
-**Gambar 7. Confusion Matrix (Normalized) per Model (Cell 22, visual kedua)**  
-Confusion matrix ternormalisasi menyajikan proporsi prediksi per kelas sehingga memungkinkan perbandingan yang adil antar kelas dengan ukuran sampel berbeda jauh. Berbeda dari matriks mentah, visual ini menonjolkan kemampuan model pada kelas minoritas karena pengaruh dominasi kelas mayoritas telah dinormalisasi. Dengan pendekatan ini, kelemahan relatif pada kelas serangan langka dapat terlihat lebih jelas dan menjadi masukan penting untuk strategi peningkatan model di tahap lanjutan.
+| Kelas | Precision | Recall | F1-Score | Support |
+|---|---:|---:|---:|---:|
+| Analysis | 0,2963 | 0,9918 | 0,4563 | 245 |
+| Backdoor | 0,6449 | 0,9217 | 0,7588 | 932 |
+| Benign | 1,0000 | 1,0000 | 1,0000 | 444.586 |
+| DoS | 0,3429 | 0,5988 | 0,4361 | 1.194 |
+| Exploits | 0,9242 | 0,5707 | 0,7057 | 8.549 |
+| Fuzzers | 0,7363 | 0,8858 | 0,8042 | 6.763 |
+| Generic | 0,9346 | 0,8514 | 0,8911 | 3.930 |
+| Reconnaissance | 0,7868 | 0,7286 | 0,7566 | 3.415 |
+| Shellcode | 0,4411 | 0,9370 | 0,5999 | 476 |
+| Worms | 0,1972 | 0,8750 | 0,3218 | 32 |
+| macro avg | 0,6304 | 0,8361 | 0,6730 | 470.122 |
+| weighted avg | 0,9894 | 0,9861 | 0,9865 | 470.122 |
 
-### 3.3 Trade-off Kualitas Deteksi vs Efisiensi
+Tabel 13 menunjukkan CatBoost memiliki beberapa kelas dengan *recall* tinggi, tetapi terjadi kompromi pada *precision* di sejumlah kelas minoritas sehingga F1 agregat lebih rendah.
 
-Meskipun XGBoost unggul pada kualitas prediksi, CatBoost lebih cepat pada tahap pelatihan dan inferensi. Waktu pelatihan CatBoost tercatat 34,386 detik, lebih cepat dibanding XGBoost 54,995 detik, dan latensi inferensinya juga lebih rendah yaitu 0,0017 ms/sampel dibanding 0,0042 ms/sampel pada XGBoost.
+**Gambar 4. Heatmap F1 per kelas antar model (Cell 19).**  
+Heatmap menyajikan F1 tiap kelas pada kolom model (XGBoost/CatBoost) dan baris kelas serangan/benign, dengan kode warna untuk besar skor. Visual ini memperlihatkan perbedaan performa antar model per kelas, terutama kelas minoritas.
 
-Secara praktis, temuan ini menunjukkan bahwa XGBoost lebih direkomendasikan ketika prioritas utama adalah kualitas deteksi ancaman dan meminimalkan *missed attack*, sedangkan CatBoost lebih layak dipilih ketika prioritas sistem adalah latensi rendah dan efisiensi komputasi untuk deployment real-time dengan sumber daya terbatas.
+**Gambar 5. Confusion matrix mentah dan ternormalisasi per model (Cell 22).**  
+Setiap model ditampilkan dalam dua matriks: confusion matrix mentah (jumlah absolut) dan confusion matrix ternormalisasi per kelas aktual (*normalize=true*). Kombinasi ini membantu membaca pola salah-klasifikasi baik dari sisi volume kesalahan maupun proporsi kesalahan antar kelas.
 
-**Gambar 8. Grafik Waktu Komputasi (Training dan Inferensi) Antar Model (Cell 23)**  
-Grafik waktu komputasi memperlihatkan perbandingan efisiensi pelatihan dan inferensi kedua model dalam konteks implementasi nyata. Terlihat bahwa CatBoost lebih unggul pada kecepatan pelatihan maupun latensi inferensi per sampel, sedangkan XGBoost unggul pada kualitas deteksi berdasarkan metrik klasifikasi. Gambar ini menegaskan adanya *trade-off* praktis antara efektivitas deteksi dan efisiensi operasional, sehingga pemilihan model perlu disesuaikan dengan prioritas sistem, apakah berfokus pada akurasi deteksi ancaman atau kebutuhan respons real-time.
+### 3.4 Analisis Selisih Metrik Per Kelas (XGBoost – CatBoost)
 
-### 3.4 Implikasi untuk Implementasi IDS
+**Tabel 14. Delta per kelas untuk precision, recall, dan F1**
 
-Hasil penelitian menegaskan bahwa evaluasi IDS tidak cukup hanya berfokus pada accuracy. Untuk data *imbalanced*, metrik seperti Balanced Accuracy dan MCC perlu dijadikan komponen utama keputusan bersama F1/Recall. Kombinasi metrik performa prediksi dan metrik operasional (waktu pelatihan/inferensi) menghasilkan keputusan model yang lebih relevan untuk kebutuhan lapangan.
+| Kelas | Support | ΔPrecision | ΔRecall | ΔF1 |
+|---|---:|---:|---:|---:|
+| Analysis | 245 | +0,1315 | -0,0734 | +0,1274 |
+| Backdoor | 932 | +0,2919 | +0,0171 | +0,1790 |
+| Benign | 444.586 | +0,0000 | +0,0000 | +0,0000 |
+| DoS | 1.194 | +0,1153 | +0,1039 | +0,1186 |
+| Exploits | 8.549 | -0,0019 | +0,1293 | +0,0902 |
+| Fuzzers | 6.763 | +0,0600 | +0,0287 | +0,0471 |
+| Generic | 3.930 | +0,0139 | +0,0532 | +0,0349 |
+| Reconnaissance | 3.415 | +0,0104 | +0,0793 | +0,0459 |
+| Shellcode | 476 | +0,1570 | +0,0042 | +0,1315 |
+| Worms | 32 | +0,5216 | -0,1562 | +0,3970 |
+
+Interpretasi utama: XGBoost lebih konsisten meningkatkan F1 pada hampir semua kelas serangan, terutama kelas minoritas (*Worms*, *Backdoor*, *Shellcode*, *Analysis*). CatBoost menunjukkan recall sangat tinggi pada beberapa kelas langka (mis. *Analysis* dan *Worms*), tetapi dengan penalti precision yang besar sehingga F1 total tetap lebih rendah.
+
+### 3.5 Implikasi Implementasi IDS
+
+Hasil menunjukkan strategi pemilihan model harus mengikuti prioritas sistem:
+- **Prioritas kualitas deteksi** (khususnya kelas minoritas dan kestabilan lintas kelas): pilih **XGBoost**.
+- **Prioritas latensi dan efisiensi komputasi** (deployment real-time terbatas sumber daya): **CatBoost** adalah alternatif kuat.
+
+Dengan demikian, penggunaan metrik gabungan (F1, Recall, Balanced Accuracy, MCC) bersama metrik operasional (waktu training/inferensi) memberikan dasar keputusan yang lebih tepat daripada accuracy tunggal (Sokolova & Lapalme, 2009; Chicco & Jurman, 2020).
 
 ## 4. KETERBATASAN PENELITIAN
 
-Beberapa keterbatasan yang perlu dicatat adalah bahwa eksperimen masih berada pada konfigurasi baseline dan belum mencakup *hyperparameter tuning* secara ekstensif. Selain itu, studi ini hanya menggunakan satu dataset, yaitu NF-UNSW-NB15-v3, sehingga generalisasi lintas dataset belum dapat dipastikan. Evaluasi juga masih berfokus pada metrik klasifikasi dan waktu komputasi, serta belum memasukkan analisis konsumsi memori dan energi pada skenario deployment.
+Keterbatasan utama studi ini:
+1. Konfigurasi model masih baseline dan belum melalui *hyperparameter tuning* ekstensif.
+2. Evaluasi hanya pada satu dataset (NF-UNSW-NB15-v3), sehingga generalisasi lintas dataset perlu diuji lebih lanjut.
+3. Analisis operasional belum memasukkan metrik konsumsi memori/energi dan throughput produksi.
+4. Hasil tetap sensitif terhadap kualitas data dan distribusi kelas pada skenario aktual.
 
 ## 5. KESIMPULAN DAN SARAN
 
-Penelitian komparatif pada NF-UNSW-NB15-v3 menunjukkan bahwa **XGBoost** merupakan model terbaik berdasarkan prioritas F1→Recall, dengan F1 0,9903, Recall 0,9901, Balanced Accuracy 0,8547, MCC 0,9061, dan CV F1 0,9901±0,0001. **CatBoost** tetap kompetitif namun berada di bawah XGBoost pada kualitas deteksi (F1 0,9865), serta unggul pada efisiensi komputasi (pelatihan dan inferensi lebih cepat).
+Berdasarkan komparasi menyeluruh dari seluruh keluaran notebook, **XGBoost** menjadi model terbaik dengan prioritas ranking F1→Recall pada eksperimen ini. Model ini memberikan keseimbangan terbaik antara akurasi global dan kestabilan antar kelas (Balanced Accuracy, MCC), serta konsisten pada validasi silang.
 
-Untuk pengembangan penelitian selanjutnya, disarankan melakukan *hyperparameter optimization* yang lebih terstruktur pada kedua model, menambah uji lintas dataset IDS untuk meningkatkan validitas eksternal, serta menambahkan evaluasi aspek operasional lanjutan seperti memori, throughput, dan stabilitas inferensi jangka panjang.
+**CatBoost** tetap sangat relevan pada kebutuhan inferensi cepat karena unggul signifikan pada waktu training dan latensi inferensi. Oleh karena itu, rekomendasi implementasi adalah:
+- gunakan XGBoost untuk sistem IDS yang menekankan kualitas deteksi maksimum,
+- gunakan CatBoost untuk lingkungan operasional yang menuntut respons sangat cepat.
+
+Penelitian lanjutan disarankan mencakup optimasi hiperparameter terstruktur, validasi lintas dataset IDS, serta evaluasi metrik operasional lanjutan (memori, throughput, energi).
 
 ## UCAPAN TERIMA KASIH
 
-Penulis mengucapkan terima kasih kepada penyedia dataset NF-UNSW-NB15-v3 dan platform komputasi yang mendukung pelaksanaan eksperimen.
+Penulis mengucapkan terima kasih kepada penyedia dataset NF-UNSW-NB15-v3 dan platform Kaggle Notebook yang mendukung pelaksanaan eksperimen.
 
 ## DAFTAR PUSTAKA
 
-[1] Sarhan, M., and Portmann, M., “NF-UNSW-NB15-v3 Dataset,” Kaggle, 2022. Available: https://www.kaggle.com/datasets/rachmanantaibnufajar/nf-unsw-nb15-v3 (accessed: 2026-04-02).  
-[2] Chen, T., and Guestrin, C., “XGBoost: A Scalable Tree Boosting System,” in *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD '16)*, 2016, pp. 785–794, doi: 10.1145/2939672.2939785.  
-[3] Prokhorenkova, L., Gusev, G., Vorobev, A. V., Dorogush, A. V., and Gulin, A., “CatBoost: Unbiased Boosting with Categorical Features,” in *Advances in Neural Information Processing Systems*, vol. 31, 2018, pp. 6638–6648.  
-[4] Pedregosa, F., et al., “Scikit-learn: Machine Learning in Python,” *Journal of Machine Learning Research*, vol. 12, pp. 2825–2830, 2011.
+Chen, T., & Guestrin, C. (2016). XGBoost: A scalable tree boosting system. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining* (pp. 785–794). https://doi.org/10.1145/2939672.2939785
+
+Chicco, D., & Jurman, G. (2020). The advantages of the Matthews correlation coefficient (MCC) over F1 score and accuracy in binary classification evaluation. *BMC Genomics, 21*(1), 6. https://doi.org/10.1186/s12864-019-6413-7
+
+He, H., & Garcia, E. A. (2009). Learning from imbalanced data. *IEEE Transactions on Knowledge and Data Engineering, 21*(9), 1263–1284. https://doi.org/10.1109/TKDE.2008.239
+
+Moustafa, N., & Slay, J. (2015). UNSW-NB15: A comprehensive data set for network intrusion detection systems (UNSW-NB15 network data set). In *2015 Military Communications and Information Systems Conference (MilCIS)* (pp. 1–6). IEEE. https://doi.org/10.1109/MilCIS.2015.7348942
+
+Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O., . . . Duchesnay, E. (2011). Scikit-learn: Machine learning in Python. *Journal of Machine Learning Research, 12*, 2825–2830.
+
+Prokhorenkova, L., Gusev, G., Vorobev, A., Dorogush, A. V., & Gulin, A. (2018). CatBoost: Unbiased boosting with categorical features. In S. Bengio, H. Wallach, H. Larochelle, K. Grauman, N. Cesa-Bianchi, & R. Garnett (Eds.), *Advances in Neural Information Processing Systems* (Vol. 31, pp. 6638–6648). Red Hook, NY: Curran Associates, Inc.
+
+Ring, M., Wunderlich, S., Scheuring, D., Landes, D., & Hotho, A. (2019). A survey of network-based intrusion detection data sets. *Computers & Security, 86*, 147–167. https://doi.org/10.1016/j.cose.2019.06.005
+
+Sarhan, M., Layeghy, S., Moustafa, N., Portmann, M., & Debie, E. (2021). NetFlow datasets for machine learning-based network intrusion detection systems. *IEEE Access, 9*, 78530–78550. https://doi.org/10.1109/ACCESS.2021.3085096
+
+Sokolova, M., & Lapalme, G. (2009). A systematic analysis of performance measures for classification tasks. *Information Processing & Management, 45*(4), 427–437. https://doi.org/10.1016/j.ipm.2009.03.002
 
 ---
 
