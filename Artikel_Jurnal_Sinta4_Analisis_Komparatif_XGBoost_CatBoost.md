@@ -60,7 +60,7 @@ Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke 
 | Duplikat awal | 14.815 |
 | Nilai hilang total | 63.425 |
 | Jumlah kelas | 10 |
-| Imbalance ratio (Benign/Worms) | 14162,85x |
+| Imbalance ratio (Benign/Worms) | 14.162,85x |
 
 **Tabel 3. Komposisi tipe data**
 
@@ -178,6 +178,12 @@ Evaluasi dilakukan pada data uji (hold-out) menggunakan Accuracy, Balanced Accur
 
 XGBoost unggul pada seluruh metrik kualitas deteksi inti, sedangkan CatBoost unggul pada efisiensi komputasi. Selisih utama XGBoost terhadap CatBoost adalah +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Standar deviasi CV F1 keduanya sama-sama rendah (0,0001), menandakan stabilitas lintas fold.
 
+**Gambar 1. Bar chart metrik utama antarmodel (Cell 21).**  
+Bar chart horizontal membandingkan Accuracy, Balanced Accuracy, Precision, Recall, F1, dan ROC-AUC untuk XGBoost dan CatBoost (sumbu-x: skor 0–1; sumbu-y: metrik). Visual ini menegaskan keunggulan konsisten XGBoost pada metrik kualitas deteksi utama.
+
+**Gambar 2. Heatmap komparasi metrik agregat model (Cell 25).**  
+Heatmap menampilkan metrik agregat (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, CV F1 mean) per model, dengan intensitas warna merepresentasikan besar skor (semakin gelap semakin tinggi). Visual ini mempermudah pembacaan posisi relatif kedua model pada banyak metrik sekaligus.
+
 ### 3.2 Pemenang per Aspek Evaluasi dan Trade-off Operasional
 
 **Tabel 11. Pemenang per aspek**
@@ -192,6 +198,9 @@ XGBoost unggul pada seluruh metrik kualitas deteksi inti, sedangkan CatBoost ung
 | Peringkat akhir (F1→Recall) | XGBoost |
 
 CatBoost ~37,47% lebih cepat saat training dan ~59,52% lebih cepat pada latensi inferensi per sampel. Namun, untuk konteks IDS yang menekankan minimisasi *missed attack* pada kelas minoritas, keunggulan XGBoost pada Balanced Accuracy dan MCC memberi justifikasi pemilihan model utama.
+
+**Gambar 3. Grafik waktu training dan inferensi (Cell 23).**  
+Visual terdiri dari dua panel: waktu pelatihan (detik) dan latensi inferensi per sampel (milidetik), dengan sumbu-x sebagai nilai waktu dan sumbu-y sebagai model. Grafik ini memperjelas sisi efisiensi operasional kedua model.
 
 ### 3.3 Laporan Klasifikasi Lengkap per Model
 
@@ -233,6 +242,12 @@ CatBoost ~37,47% lebih cepat saat training dan ~59,52% lebih cepat pada latensi 
 | macro avg | 0,6304 | 0,8361 | 0,6730 | 470.122 |
 | weighted avg | 0,9894 | 0,9861 | 0,9865 | 470.122 |
 
+**Gambar 4. Heatmap F1 per kelas antar model (Cell 19).**  
+Heatmap menyajikan F1 tiap kelas pada kolom model (XGBoost/CatBoost) dan baris kelas serangan/benign, dengan kode warna untuk besar skor. Visual ini memperlihatkan perbedaan performa antarmodel per kelas, terutama kelas minoritas.
+
+**Gambar 5. Confusion matrix mentah dan ternormalisasi per model (Cell 22).**  
+Setiap model ditampilkan dalam dua matriks: confusion matrix mentah (jumlah absolut) dan confusion matrix ternormalisasi per kelas aktual (*normalize=true*). Kombinasi ini membantu membaca pola salah-klasifikasi baik dari sisi volume kesalahan maupun proporsi kesalahan antar kelas.
+
 ### 3.4 Analisis Selisih Metrik Per Kelas (XGBoost – CatBoost)
 
 **Tabel 14. Delta per kelas untuk precision, recall, dan F1**
@@ -252,18 +267,7 @@ CatBoost ~37,47% lebih cepat saat training dan ~59,52% lebih cepat pada latensi 
 
 Interpretasi utama: XGBoost lebih konsisten meningkatkan F1 pada hampir semua kelas serangan, terutama kelas minoritas (*Worms*, *Backdoor*, *Shellcode*, *Analysis*). CatBoost menunjukkan recall sangat tinggi pada beberapa kelas langka (mis. *Analysis* dan *Worms*), tetapi dengan penalti precision yang besar sehingga F1 total tetap lebih rendah.
 
-### 3.5 Ringkasan Visualisasi yang Dihasilkan Notebook
-
-Notebook menghasilkan visual wajib yang semuanya digunakan sebagai dasar interpretasi hasil:
-1. Distribusi label dataset dan anotasi *imbalance ratio* (Cell 6).
-2. Validasi *stratified split* train-test per kelas (Cell 8).
-3. Heatmap F1 per kelas antarmodel (Cell 19).
-4. Bar chart metrik utama antarmodel (Cell 21).
-5. Confusion matrix raw dan normalized per model (Cell 22).
-6. Grafik waktu training dan inferensi (Cell 23).
-7. Heatmap komparasi metrik agregat model (Cell 25).
-
-### 3.6 Implikasi Implementasi IDS
+### 3.5 Implikasi Implementasi IDS
 
 Hasil menunjukkan strategi pemilihan model harus mengikuti prioritas sistem:
 - **Prioritas kualitas deteksi** (khususnya kelas minoritas dan kestabilan lintas kelas): pilih **XGBoost**.
