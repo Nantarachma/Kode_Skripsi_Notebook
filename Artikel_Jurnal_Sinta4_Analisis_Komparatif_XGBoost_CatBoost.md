@@ -47,6 +47,8 @@ Eksperimen dilakukan pada Kaggle Notebook (Linux 6.6.113+, Python 3.12.12) denga
 | xgboost | 3.2.0 |
 | catboost | 1.2.10 |
 
+Tabel 1 menegaskan bahwa eksperimen dijalankan pada lingkungan yang terdokumentasi jelas, sehingga hasil dapat direplikasi dengan konfigurasi perangkat lunak yang setara.
+
 ### 2.2 Pemanggilan Dataset dan Audit Awal
 
 Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke jalur lokal (`./`, `./data`, `./dataset`) agar pipeline tetap berjalan lintas lingkungan. Dataset yang digunakan memiliki ukuran 2.365.424 baris × 55 kolom.
@@ -62,6 +64,8 @@ Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke 
 | Jumlah kelas | 10 |
 | Imbalance ratio (Benign/Worms) | 14.162,85x |
 
+Tabel 2 menunjukkan skala data yang besar sekaligus ketidakseimbangan kelas yang tinggi, sehingga pemilihan metrik evaluasi dan strategi penanganan *imbalance* menjadi krusial.
+
 **Tabel 3. Komposisi tipe data**
 
 | Tipe data | Jumlah kolom |
@@ -69,6 +73,8 @@ Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke 
 | int64 | 49 |
 | object | 3 |
 | float64 | 3 |
+
+Tabel 3 memperlihatkan dominasi fitur numerik, yang menjadi dasar penggunaan imputasi median serta perlakuan khusus hanya pada sebagian kecil fitur kategorikal.
 
 **Tabel 4. Distribusi label sebelum split**
 
@@ -85,6 +91,8 @@ Notebook mencari dataset secara otomatis di `/kaggle/input`, lalu *fallback* ke 
 | Analysis | 1.226 | 0,05 |
 | Worms | 158 | 0,01 |
 
+Tabel 4 menegaskan dominasi kelas *Benign* dan kecilnya proporsi kelas serangan langka, sehingga evaluasi harus menekankan metrik yang sensitif terhadap performa antar kelas.
+
 ### 2.3 Skenario Eksperimen dan Stratified Split
 
 Setelah penghapusan duplikasi, data dibagi dengan *stratified train-test split* (80:20). Label di-*encode* menggunakan `LabelEncoder` untuk skenario multikelas 10 kelas.
@@ -99,6 +107,8 @@ Setelah penghapusan duplikasi, data dibagi dengan *stratified train-test split* 
 | Proporsi train:test | 80% : 20% |
 | Ukuran train | 1.880.487 × 54 |
 | Ukuran test | 470.122 × 54 |
+
+Tabel 5 merangkum skenario eksperimen setelah pembersihan data dan memastikan pembagian data cukup besar untuk pelatihan serta evaluasi hold-out yang stabil.
 
 **Tabel 6. Validasi proporsi kelas train vs test**
 
@@ -115,6 +125,8 @@ Setelah penghapusan duplikasi, data dibagi dengan *stratified train-test split* 
 | Shellcode | 0,10 | 0,10 |
 | Worms | 0,01 | 0,01 |
 
+Tabel 6 mengonfirmasi bahwa *stratified split* menjaga distribusi kelas train dan test tetap konsisten, sehingga bias pembagian data dapat diminimalkan.
+
 ### 2.4 Preprocessing dan Penanganan Imbalance
 
 Pipeline preprocessing dibuat identik untuk kedua model: (1) pemisahan fitur numerik-kategorikal, (2) konversi `inf/-inf` menjadi `NaN`, (3) imputasi median untuk numerik, (4) imputasi kategorikal (`MISSING`) dan pemetaan kategori tak terlihat pada data uji ke `UNKNOWN`, serta (5) perhitungan *balanced class weight* menjadi `sample_weight` pada proses *fit* (He & Garcia, 2009; Pedregosa et al., 2011).
@@ -128,6 +140,8 @@ Pipeline preprocessing dibuat identik untuk kedua model: (1) pemisahan fitur num
 | Jumlah fitur numerik | 52 |
 | Strategi imputasi numerik | Median |
 | Strategi imputasi kategorikal | MISSING / UNKNOWN |
+
+Tabel 7 menegaskan keseragaman pipeline praproses untuk kedua model, sehingga perbedaan hasil lebih merefleksikan karakter model daripada perbedaan perlakuan data.
 
 **Tabel 8. Class weight (encoded class)**
 
@@ -143,6 +157,8 @@ Pipeline preprocessing dibuat identik untuk kedua model: (1) pemisahan fitur num
 | 7 | Reconnaissance | 13,7674 |
 | 8 | Shellcode | 98,7132 |
 | 9 | Worms | 1492,4500 |
+
+Tabel 8 memperlihatkan bobot tinggi pada kelas minoritas, yang dirancang untuk menekan bias model terhadap kelas mayoritas saat proses pelatihan.
 
 ### 2.5 Konfigurasi Baseline Model
 
@@ -161,6 +177,8 @@ Pipeline preprocessing dibuat identik untuk kedua model: (1) pemisahan fitur num
 | Penanganan fitur kategorikal | `enable_categorical=True` | `cat_features` saat fit |
 | Device | `cuda` | `GPU` |
 
+Tabel 9 menunjukkan konfigurasi baseline yang sebanding antar model, sehingga komparasi performa dapat diinterpretasikan secara lebih adil.
+
 ### 2.6 Protokol Evaluasi
 
 Evaluasi dilakukan pada data uji (hold-out) menggunakan Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu pelatihan, waktu inferensi total, dan latensi inferensi per sampel. Validasi tambahan memakai 5-fold *Stratified Cross-Validation* dengan weighted F1. Ranking model ditetapkan berdasarkan prioritas **F1 lalu Recall** (Sokolova & Lapalme, 2009; Chicco & Jurman, 2020).
@@ -178,7 +196,7 @@ Evaluasi dilakukan pada data uji (hold-out) menggunakan Accuracy, Balanced Accur
 
 XGBoost unggul pada seluruh metrik kualitas deteksi inti, sedangkan CatBoost unggul pada efisiensi komputasi. Selisih utama XGBoost terhadap CatBoost adalah +0,0038 (F1), +0,0040 (Recall), +0,0186 (Balanced Accuracy), dan +0,0384 (MCC). Standar deviasi CV F1 keduanya sama-sama rendah (0,0001), menandakan stabilitas lintas fold.
 
-**Gambar 1. Bar chart metrik utama antarmodel (Cell 21).**  
+**Gambar 1. Bar chart metrik utama antar model (Cell 21).**  
 Bar chart horizontal membandingkan Accuracy, Balanced Accuracy, Precision, Recall, F1, dan ROC-AUC untuk XGBoost dan CatBoost (sumbu-x: skor 0–1; sumbu-y: metrik). Visual ini menegaskan keunggulan konsisten XGBoost pada metrik kualitas deteksi utama.
 
 **Gambar 2. Heatmap komparasi metrik agregat model (Cell 25).**  
@@ -223,6 +241,8 @@ Visual terdiri dari dua panel: waktu pelatihan (detik) dan latensi inferensi per
 | macro avg | 0,7604 | 0,8547 | 0,7902 | 470.122 |
 | weighted avg | 0,9915 | 0,9901 | 0,9903 | 470.122 |
 
+Tabel 12 menunjukkan XGBoost relatif stabil pada mayoritas kelas dan tetap kompetitif pada kelas minoritas, dengan *weighted average* yang sangat tinggi.
+
 #### 3.3.2 Classification Report – CatBoost
 
 **Tabel 13. Metrik per kelas CatBoost**
@@ -242,8 +262,10 @@ Visual terdiri dari dua panel: waktu pelatihan (detik) dan latensi inferensi per
 | macro avg | 0,6304 | 0,8361 | 0,6730 | 470.122 |
 | weighted avg | 0,9894 | 0,9861 | 0,9865 | 470.122 |
 
+Tabel 13 menunjukkan CatBoost memiliki beberapa kelas dengan *recall* tinggi, tetapi terjadi kompromi pada *precision* di sejumlah kelas minoritas sehingga F1 agregat lebih rendah.
+
 **Gambar 4. Heatmap F1 per kelas antar model (Cell 19).**  
-Heatmap menyajikan F1 tiap kelas pada kolom model (XGBoost/CatBoost) dan baris kelas serangan/benign, dengan kode warna untuk besar skor. Visual ini memperlihatkan perbedaan performa antarmodel per kelas, terutama kelas minoritas.
+Heatmap menyajikan F1 tiap kelas pada kolom model (XGBoost/CatBoost) dan baris kelas serangan/benign, dengan kode warna untuk besar skor. Visual ini memperlihatkan perbedaan performa antar model per kelas, terutama kelas minoritas.
 
 **Gambar 5. Confusion matrix mentah dan ternormalisasi per model (Cell 22).**  
 Setiap model ditampilkan dalam dua matriks: confusion matrix mentah (jumlah absolut) dan confusion matrix ternormalisasi per kelas aktual (*normalize=true*). Kombinasi ini membantu membaca pola salah-klasifikasi baik dari sisi volume kesalahan maupun proporsi kesalahan antar kelas.
