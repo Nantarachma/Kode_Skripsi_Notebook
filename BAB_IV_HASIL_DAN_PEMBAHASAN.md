@@ -312,15 +312,11 @@ Hasil distribusi bobot final per kelas ditampilkan pada Tabel 4.9.
 
 Tabel 4.9 memperlihatkan efek transformasi bobot secara kuantitatif. Tanpa transformasi hybrid, bobot raw untuk kelas Probe (32,3145) terlampau tinggi — setiap sampel Probe bernilai setara dengan 32 sampel Normal, yang dapat menyebabkan *overfitting* pada pola minoritas. Setelah transformasi `sqrt` dan normalisasi, rentang bobot menyempit secara drastis dari 0,26–32,31 menjadi 0,76–8,40, memberikan keseimbangan yang lebih proporsional. Kolom "Efektif Sampel" menunjukkan bagaimana pembobotan mengubah kontribusi relatif setiap kelas: kelas Normal yang awalnya mendominasi 94,60% kini memberikan kontribusi efektif yang lebih proporsional, sementara kelas Probe yang paling langka meningkat kontribusi efektifnya dari ~12 ribu menjadi ~98 ribu.
 
-> **[GAMBAR 4.2 — Visualisasi Distribusi Bobot dan Efektif Sampel per Kelas]**
-> *Deskripsi: Diagram batang yang membandingkan jumlah sampel asli versus sampel efektif setelah pembobotan hybrid untuk setiap kelas, menunjukkan efek pemerataan distribusi. File referensi: `distribusi_dan_bobot_skripsi.png`.*
 
-Gambar 4.2 menyajikan perbandingan visual antara distribusi asli dan distribusi efektif pasca-pembobotan. Dari diagram ini terlihat bahwa rasio antara kelas terbesar dan terkecil menyusut dari 122,28:1 menjadi sekitar 11:1, memberikan sinyal pelatihan yang substansial lebih seimbang tanpa sepenuhnya menghapus informasi prevalensi kelas yang sebenarnya. Keseimbangan ini penting karena pada lingkungan operasional NIDS, prevalensi kelas Normal yang tinggi merupakan realitas yang harus tetap direpresentasikan dalam model.
-
-> **[GAMBAR 4.3 — Dampak Pembobotan terhadap Distribusi Kelas]**
+> **[GAMBAR 4.2 — Dampak Pembobotan terhadap Distribusi Kelas]**
 > *Deskripsi: Perbandingan visual distribusi kelas sebelum dan sesudah penerapan bobot hybrid, menggambarkan penurunan dominasi kelas Normal dan peningkatan representasi kelas serangan. File referensi: `impact_weighting_skripsi.png`.*
 
-Gambar 4.3 menyajikan perbandingan *before-after* yang menunjukkan pergeseran distribusi secara keseluruhan. Sebelum pembobotan, kelas Normal secara visual mendominasi hampir seluruh area diagram, yang berarti gradien pelatihan didominasi oleh pola lalu lintas normal. Setelah pembobotan, kontribusi kelas serangan meningkat secara proporsional, memberikan sinyal yang lebih kuat kepada algoritma untuk mempelajari pola-pola anomali yang jarang namun kritis untuk dideteksi.
+Gambar 4.2 menyajikan perbandingan *before-after* yang menunjukkan pergeseran distribusi secara keseluruhan. Sebelum pembobotan, kelas Normal secara visual mendominasi hampir seluruh area diagram, yang berarti gradien pelatihan didominasi oleh pola lalu lintas normal. Setelah pembobotan, kontribusi kelas serangan meningkat secara proporsional, memberikan sinyal yang lebih kuat kepada algoritma untuk mempelajari pola-pola anomali yang jarang namun kritis untuk dideteksi.
 
 Statistik ringkasan bobot mengkonfirmasi kewajaran distribusi:
 - **Min Weight:** 0,7600 (Normal — kelas mayoritas, mendapat penalti rendah)
@@ -457,10 +453,10 @@ Kode Program 4.7 menampilkan konfigurasi dan eksekusi optimasi menggunakan tiga 
 
 Kode Program 4.7 menegaskan desain eksperimen yang adil, di mana ketiga sampler Optuna (TPE, NSGA-II, dan Random) dijalankan pada jumlah trial dan seed yang sama sehingga perbandingan performa antar metode dilakukan dalam kondisi yang setara.
 
-> **[GAMBAR 4.4 — Grafik Riwayat Optimasi (Optimization History)]**
+> **[GAMBAR 4.3 — Grafik Riwayat Optimasi (Optimization History)]**
 > *Deskripsi: Grafik garis yang menunjukkan dinamika pencarian per trial untuk ketiga metode, menampilkan evolusi F1-Score dan Latency sepanjang 30 trial. File referensi: `optimization_history_final.png`.*
 
-Gambar 4.4 memvisualisasikan trajektori pencarian dari seluruh 90 trial pada dua sumbu objektif. Pola konvergensi yang berbeda terlihat jelas: TPE menunjukkan perbaikan bertahap yang relatif konsisten seiring berjalannya trial, mencerminkan kemampuannya memanfaatkan informasi trial sebelumnya (*exploitation*). NSGA-II memperlihatkan fluktuasi yang lebih besar akibat mekanisme mutasi dan *crossover* yang melekat pada algoritma evolusioner. Random Search menampilkan sebaran paling acak, namun sesekali menemukan konfigurasi yang sangat kompetitif — sebuah fenomena yang mendemonstrasikan kekuatan eksplorasi stokastik murni.
+Gambar 4.3 memvisualisasikan trajektori pencarian dari seluruh 90 trial pada dua sumbu objektif. Pola konvergensi yang berbeda terlihat jelas: TPE menunjukkan perbaikan bertahap yang relatif konsisten seiring berjalannya trial, mencerminkan kemampuannya memanfaatkan informasi trial sebelumnya (*exploitation*). NSGA-II memperlihatkan fluktuasi yang lebih besar akibat mekanisme mutasi dan *crossover* yang melekat pada algoritma evolusioner. Random Search menampilkan sebaran paling acak, namun sesekali menemukan konfigurasi yang sangat kompetitif — sebuah fenomena yang mendemonstrasikan kekuatan eksplorasi stokastik murni.
 
 Efektivitas pencarian ketiga metode dirangkum melalui statistik konvergensi pada Tabel 4.12.
 
@@ -518,10 +514,10 @@ Evaluasi kinerja model merupakan tahap kritis yang menentukan validitas dan reli
 
 Suatu solusi dikatakan *Pareto-optimal* atau *non-dominated* jika tidak ada solusi lain yang lebih baik pada semua objektif secara bersamaan. Himpunan seluruh solusi non-dominated membentuk *Pareto front*, yang merepresentasikan *trade-off* terbaik yang dapat dicapai antara objektif yang berkonflik.
 
-> **[GAMBAR 4.5 — Pareto Front Statis (Ketiga Metode)]**
+> **[GAMBAR 4.4 — Pareto Front Statis (Ketiga Metode)]**
 > *Deskripsi: Scatter plot yang menampilkan seluruh trial (titik transparan) dan solusi Pareto-optimal (titik tebal berwarna) untuk TPE (biru), NSGA-II (merah), dan Random (hijau) pada ruang F1-Score vs Latency. File referensi: `pareto_front_static_hd.png`.*
 
-Gambar 4.5 merupakan visualisasi kunci yang menempatkan seluruh 90 trial dan 15 solusi Pareto-optimal pada bidang koordinat F1-Score × Latensi. Beberapa temuan empiris yang terlihat dari visualisasi ini: (1) *Pareto front* ketiga metode berada pada region yang berdekatan, mengindikasikan bahwa tidak ada satu metode yang secara konsisten mendominasi metode lain pada kedua objektif; (2) TPE menguasai region latensi rendah (sisi kiri grafik) dengan solusi-solusi yang efisien secara komputasi; (3) Random Search menjangkau titik F1 tertinggi (sisi atas grafik) meskipun dengan latensi lebih besar; (4) NSGA-II menghasilkan *front* yang paling kompak dengan variasi antar solusi yang lebih terbatas.
+Gambar 4.4 merupakan visualisasi kunci yang menempatkan seluruh 90 trial dan 15 solusi Pareto-optimal pada bidang koordinat F1-Score × Latensi. Beberapa temuan empiris yang terlihat dari visualisasi ini: (1) *Pareto front* ketiga metode berada pada region yang berdekatan, mengindikasikan bahwa tidak ada satu metode yang secara konsisten mendominasi metode lain pada kedua objektif; (2) TPE menguasai region latensi rendah (sisi kiri grafik) dengan solusi-solusi yang efisien secara komputasi; (3) Random Search menjangkau titik F1 tertinggi (sisi atas grafik) meskipun dengan latensi lebih besar; (4) NSGA-II menghasilkan *front* yang paling kompak dengan variasi antar solusi yang lebih terbatas.
 
 Detail solusi Pareto-optimal untuk setiap metode disajikan pada Tabel 4.14 hingga Tabel 4.16.
 
@@ -606,20 +602,20 @@ Kode Program 4.8 menampilkan proses retrain model dengan parameter terbaik dari 
 
 Kode Program 4.8 menunjukkan prosedur evaluasi final yang sistematis: memilih trial Pareto terbaik berdasarkan F1, melatih ulang model dengan parameter terpilih, lalu menghitung prediksi dan latensi pada data uji holdout untuk menghasilkan metrik komparatif akhir.
 
-> **[GAMBAR 4.6 — Diagram Batang Perbandingan Metrik antar Metode]**
+> **[GAMBAR 4.5 — Diagram Batang Perbandingan Metrik antar Metode]**
 > *Deskripsi: Grouped bar chart yang membandingkan F1-Macro, Accuracy, Latency, dan Training Time untuk ketiga metode secara berdampingan. File referensi: `metrics_grouped_bar.png`.*
 
-Gambar 4.6 memvisualisasikan keempat metrik dalam format *grouped bar chart* yang memungkinkan perbandingan langsung antar metode. Representasi visual ini memperjelas temuan kuantitatif dari Tabel 4.17: batang F1 dan Accuracy memiliki ketinggian yang hampir tidak dapat dibedakan secara visual, sementara batang Latency dan Training Time menunjukkan perbedaan yang mencolok — mengkonfirmasi bahwa diferensiasi utama antar metode terletak pada **efisiensi komputasi**, bukan kualitas deteksi.
+Gambar 4.5 memvisualisasikan keempat metrik dalam format *grouped bar chart* yang memungkinkan perbandingan langsung antar metode. Representasi visual ini memperjelas temuan kuantitatif dari Tabel 4.17: batang F1 dan Accuracy memiliki ketinggian yang hampir tidak dapat dibedakan secara visual, sementara batang Latency dan Training Time menunjukkan perbedaan yang mencolok — mengkonfirmasi bahwa diferensiasi utama antar metode terletak pada **efisiensi komputasi**, bukan kualitas deteksi.
 
-> **[GAMBAR 4.7 — Heatmap F1-Score per Kelas per Metode]**
+> **[GAMBAR 4.6 — Heatmap F1-Score per Kelas per Metode]**
 > *Deskripsi: Heatmap warna yang menampilkan F1-Score setiap kelas (Normal, DoS, Probe, Malware) untuk ketiga metode optimasi, memungkinkan identifikasi kelas yang paling sulit diklasifikasikan. File referensi: `metrics_f1_heatmap.png`.*
 
-Gambar 4.7 menyajikan dekomposisi F1-Score ke level per-kelas dalam format heatmap. Gradasi warna mengungkap hierarki kesulitan klasifikasi yang konsisten di seluruh metode: Normal mencapai F1 sempurna (1,0000, warna terdalam), Malware berada di tingkat tinggi (~0,90), DoS di tingkat menengah (~0,82), dan Probe secara konsisten menjadi kelas tersulit (~0,73, warna terpudar). Keseragaman pola ini lintas metode menunjukkan bahwa tingkat kesulitan bersifat **inheren terhadap karakteristik data**, bukan merupakan keterbatasan metode optimasi tertentu.
+Gambar 4.6 menyajikan dekomposisi F1-Score ke level per-kelas dalam format heatmap. Gradasi warna mengungkap hierarki kesulitan klasifikasi yang konsisten di seluruh metode: Normal mencapai F1 sempurna (1,0000, warna terdalam), Malware berada di tingkat tinggi (~0,90), DoS di tingkat menengah (~0,82), dan Probe secara konsisten menjadi kelas tersulit (~0,73, warna terpudar). Keseragaman pola ini lintas metode menunjukkan bahwa tingkat kesulitan bersifat **inheren terhadap karakteristik data**, bukan merupakan keterbatasan metode optimasi tertentu.
 
-> **[GAMBAR 4.8 — Scatter Plot Precision vs Recall per Kelas]**
+> **[GAMBAR 4.7 — Scatter Plot Precision vs Recall per Kelas]**
 > *Deskripsi: Scatter plot yang memposisikan setiap kombinasi kelas-metode pada ruang Precision × Recall untuk menganalisis trade-off deteksi. File referensi: `metrics_pr_scatter.png`.*
 
-Gambar 4.8 menempatkan setiap kombinasi kelas-metode pada ruang dua dimensi Precision × Recall. Titik-titik yang mendekati pojok kanan atas merepresentasikan kinerja ideal. Pola spasial yang teramati mengungkap karakteristik deteksi yang berbeda per kelas: Normal berada tepat di titik ideal (1,0; 1,0); Malware menunjukkan recall lebih tinggi dari precision, mengindikasikan sensitivitas model yang tinggi terhadap kelas ini dengan konsekuensi sedikit *false positive*; DoS memperlihatkan precision lebih tinggi dari recall, menandakan model bersikap konservatif — lebih memilih menghindari alarm palsu meskipun beberapa serangan DoS lolos; Probe berada di posisi paling jauh dari titik ideal, mengkonfirmasi statusnya sebagai kelas tersulit.
+Gambar 4.7 menempatkan setiap kombinasi kelas-metode pada ruang dua dimensi Precision × Recall. Titik-titik yang mendekati pojok kanan atas merepresentasikan kinerja ideal. Pola spasial yang teramati mengungkap karakteristik deteksi yang berbeda per kelas: Normal berada tepat di titik ideal (1,0; 1,0); Malware menunjukkan recall lebih tinggi dari precision, mengindikasikan sensitivitas model yang tinggi terhadap kelas ini dengan konsekuensi sedikit *false positive*; DoS memperlihatkan precision lebih tinggi dari recall, menandakan model bersikap konservatif — lebih memilih menghindari alarm palsu meskipun beberapa serangan DoS lolos; Probe berada di posisi paling jauh dari titik ideal, mengkonfirmasi statusnya sebagai kelas tersulit.
 
 #### Laporan Klasifikasi Detail per Metode
 
@@ -664,10 +660,10 @@ Tabel 4.19 menunjukkan model TPE dengan pola serupa namun peningkatan marginal d
 
 Tabel 4.20 menunjukkan model Random sebagai pemegang skor F1 Macro tertinggi (0,8642). Profil per-kelasnya memperlihatkan nuansa yang menarik: precision DoS tertinggi di antara ketiga metode (0,8907), namun precision tersebut dicapai dengan pengorbanan recall Probe yang justru terendah (0,7137). Kelas Malware meraih recall tertinggi (0,9299), mengisyaratkan bahwa konfigurasi `max_depth=12` pada model Random mampu menangkap pola-pola eksploitasi yang lebih kompleks. Perbedaan antar metode pada level per-kelas tetap berada pada orde 0,001–0,003, memperkuat argumentasi bahwa ketiganya secara substansial setara dalam kemampuan deteksi.
 
-> **[GAMBAR 4.9 — Ringkasan Recall per Kelas untuk Ketiga Metode]**
+> **[GAMBAR 4.8 — Ringkasan Recall per Kelas untuk Ketiga Metode]**
 > *Deskripsi: Bar chart horizontal yang membandingkan recall (detection rate) setiap kelas serangan antar metode, memfokuskan pada kemampuan deteksi aktual. File referensi: `recall_summary_chart.png`.*
 
-Gambar 4.9 memfokuskan perbandingan pada metrik **recall** — yang dalam konteks NIDS merepresentasikan *detection rate* atau proporsi serangan yang berhasil diidentifikasi. Visualisasi ini mengungkap bahwa Malware memiliki detection rate tertinggi (>92%) di semua metode, DoS berada di tingkat menengah (~76%), dan Probe memiliki detection rate terendah (~71–73%). Rendahnya recall Probe berkaitan erat dengan fenomena *class overlap* di mana pola *reconnaissance* (scanning, probing) sering kali menyerupai perilaku eksploitasi.
+Gambar 4.8 memfokuskan perbandingan pada metrik **recall** — yang dalam konteks NIDS merepresentasikan *detection rate* atau proporsi serangan yang berhasil diidentifikasi. Visualisasi ini mengungkap bahwa Malware memiliki detection rate tertinggi (>92%) di semua metode, DoS berada di tingkat menengah (~76%), dan Probe memiliki detection rate terendah (~71–73%). Rendahnya recall Probe berkaitan erat dengan fenomena *class overlap* di mana pola *reconnaissance* (scanning, probing) sering kali menyerupai perilaku eksploitasi.
 
 
 ---
@@ -678,15 +674,15 @@ Gambar 4.9 memfokuskan perbandingan pada metrik **recall** — yang dalam kontek
 
 Confusion matrix memetakan distribusi prediksi model terhadap label sebenarnya untuk mengidentifikasi pola kesalahan spesifik yang tidak tertangkap oleh metrik agregat seperti F1-Score.
 
-> **[GAMBAR 4.10 — Confusion Matrix Raw (Ketiga Metode)]**
+> **[GAMBAR 4.9 — Confusion Matrix Raw (Ketiga Metode)]**
 > *Deskripsi: Tiga heatmap confusion matrix berdampingan (NSGA-II, TPE, Random) yang menampilkan jumlah absolut prediksi per sel. Diagonal utama menunjukkan prediksi benar, sel off-diagonal menunjukkan kesalahan klasifikasi. File referensi: `cm_raw_heatmap.png`.*
 
-Gambar 4.10 menampilkan confusion matrix dalam format absolut (jumlah sampel) untuk ketiga metode secara berdampingan. Diagonal utama yang berwarna gelap menandakan dominasi prediksi benar, dengan kelas Normal yang mendominasi secara visual karena volumenya yang sangat besar (447.546 sampel). Sel-sel off-diagonal yang paling menonjol terkonsentrasi pada interaksi antar kelas serangan (DoS-Probe-Malware), sedangkan baris dan kolom Normal hampir seluruhnya bersih — mengkonfirmasi bahwa tantangan klasifikasi berpusat pada pembedaan tipe serangan, bukan pada pemisahan normal versus serangan.
+Gambar 4.9 menampilkan confusion matrix dalam format absolut (jumlah sampel) untuk ketiga metode secara berdampingan. Diagonal utama yang berwarna gelap menandakan dominasi prediksi benar, dengan kelas Normal yang mendominasi secara visual karena volumenya yang sangat besar (447.546 sampel). Sel-sel off-diagonal yang paling menonjol terkonsentrasi pada interaksi antar kelas serangan (DoS-Probe-Malware), sedangkan baris dan kolom Normal hampir seluruhnya bersih — mengkonfirmasi bahwa tantangan klasifikasi berpusat pada pembedaan tipe serangan, bukan pada pemisahan normal versus serangan.
 
-> **[GAMBAR 4.11 — Confusion Matrix Normalized (Ketiga Metode)]**
+> **[GAMBAR 4.10 — Confusion Matrix Normalized (Ketiga Metode)]**
 > *Deskripsi: Tiga heatmap confusion matrix ternormalisasi per baris (recall-based) yang menampilkan proporsi prediksi untuk setiap kelas aktual, menghilangkan efek perbedaan jumlah sampel. File referensi: `cm_norm_heatmap.png`.*
 
-Gambar 4.11 menyajikan versi ternormalisasi yang menghilangkan bias ukuran sampel dan memungkinkan perbandingan proporsional lintas kelas. Normalisasi per baris memastikan bahwa setiap kelas — terlepas dari jumlah sampelnya — dievaluasi pada skala yang sama (0–100%). Dari heatmap ini, pola kesalahan sistematis teridentifikasi secara visual: sel Probe→Malware dan DoS→Malware muncul sebagai area off-diagonal berwarna paling intens, mengkonfirmasi keberadaan *class overlap* yang signifikan.
+Gambar 4.10 menyajikan versi ternormalisasi yang menghilangkan bias ukuran sampel dan memungkinkan perbandingan proporsional lintas kelas. Normalisasi per baris memastikan bahwa setiap kelas — terlepas dari jumlah sampelnya — dievaluasi pada skala yang sama (0–100%). Dari heatmap ini, pola kesalahan sistematis teridentifikasi secara visual: sel Probe→Malware dan DoS→Malware muncul sebagai area off-diagonal berwarna paling intens, mengkonfirmasi keberadaan *class overlap* yang signifikan.
 
 Kuantifikasi pola kesalahan disajikan pada Tabel 4.21.
 
@@ -722,10 +718,10 @@ Metrik Cohen's Kappa ($\kappa$) mengukur tingkat kesepakatan antara prediksi mod
 
 Tabel 4.22 menunjukkan bahwa ketiga metode menghasilkan $\kappa > 0,92$, yang tergolong dalam kategori **"Almost Perfect Agreement"** (rentang 0,81–1,00). Selisih $\kappa$ antar metode sangat kecil (0,0020), mengkonfirmasi kesetaraan reliabilitas klasifikasi.
 
-> **[GAMBAR 4.12 — Diagram Batang Perbandingan Cohen's Kappa]**
+> **[GAMBAR 4.11 — Diagram Batang Perbandingan Cohen's Kappa]**
 > *Deskripsi: Bar chart yang memvisualisasikan skor Kappa ketiga metode dengan garis threshold interpretasi (0,81–1,00 = Almost Perfect). File referensi: `kappa_comparison.png`.*
 
-Gambar 4.12 memvisualisasikan perbandingan $\kappa$ dalam format diagram batang yang dilengkapi garis referensi kategori interpretasi. Ketiga batang memiliki tinggi yang nyaris identik dan seluruhnya berada jauh di atas batas "Almost Perfect" (0,81), memberikan konfirmasi visual yang meyakinkan bahwa seluruh model memiliki tingkat keandalan klasifikasi yang sangat tinggi.
+Gambar 4.11 memvisualisasikan perbandingan $\kappa$ dalam format diagram batang yang dilengkapi garis referensi kategori interpretasi. Ketiga batang memiliki tinggi yang nyaris identik dan seluruhnya berada jauh di atas batas "Almost Perfect" (0,81), memberikan konfirmasi visual yang meyakinkan bahwa seluruh model memiliki tingkat keandalan klasifikasi yang sangat tinggi.
 
 Kode Program 4.9 menampilkan proses perhitungan Cohen's Kappa dan analisis pola kesalahan klasifikasi dari confusion matrix.
 
@@ -775,10 +771,10 @@ Perbedaan numerik antar metode yang teramati pada Tabel 4.17 belum cukup untuk m
 
 Tabel 4.23 memperlihatkan stabilitas yang tinggi pada kedua metrik lintas fold. Variasi F1-Score antar fold sangat kecil untuk semua metode (rentang ~0,84–0,85), menunjukkan bahwa model tidak sensitif terhadap partisi data tertentu — indikator generalisasi yang baik. Pada kolom waktu inferensi, TPE secara konsisten mencatat waktu yang jauh lebih singkat di setiap fold (~0,14 detik versus ~0,24 detik untuk kedua metode lainnya), mengkonfirmasi bahwa keunggulan latensi bukan merupakan artefak pengukuran tunggal melainkan properti sistemik dari model TPE yang lebih ringan.
 
-> **[GAMBAR 4.13 — Boxplot Cross-Validation F1-Score dan Inference Time]**
+> **[GAMBAR 4.12 — Boxplot Cross-Validation F1-Score dan Inference Time]**
 > *Deskripsi: Dua boxplot berdampingan yang menampilkan distribusi F1-Score dan Inference Time dari 5-fold CV untuk ketiga metode, memperlihatkan sebaran, median, dan potensi overlap. File referensi: `cv_stats_boxplot.png`.*
 
-Gambar 4.13 menerjemahkan data tabel ke dalam representasi visual distribusi melalui boxplot. Pada panel F1-Score, *interquartile range* (IQR) ketiga metode tumpang tindih secara substansial — secara intuitif mengisyaratkan bahwa perbedaannya tidak signifikan. Sebaliknya, pada panel Inference Time, box TPE terposisi sepenuhnya di bawah box NSGA-II dan Random tanpa overlap sama sekali, memberikan bukti visual yang kuat bahwa keunggulan kecepatan TPE bersifat konsisten dan bukan kebetulan.
+Gambar 4.12 menerjemahkan data tabel ke dalam representasi visual distribusi melalui boxplot. Pada panel F1-Score, *interquartile range* (IQR) ketiga metode tumpang tindih secara substansial — secara intuitif mengisyaratkan bahwa perbedaannya tidak signifikan. Sebaliknya, pada panel Inference Time, box TPE terposisi sepenuhnya di bawah box NSGA-II dan Random tanpa overlap sama sekali, memberikan bukti visual yang kuat bahwa keunggulan kecepatan TPE bersifat konsisten dan bukan kebetulan.
 
 Konfirmasi formal melalui uji Kruskal-Wallis disajikan pada Tabel 4.24.
 
@@ -886,20 +882,20 @@ Kode Program 4.11 mengimplementasikan pendekatan surrogate model, yakni mengguna
 
 Tabel 4.25 mengungkap konsistensi yang mencolok: **`learning_rate` menduduki peringkat pertama** dalam mempengaruhi F1-Score di **ketiga metode** tanpa terkecuali, dengan importance berkisar dari 0,2809 (TPE) hingga 0,6934 (NSGA-II). Temuan ini mengkonfirmasi bahwa laju pembelajaran merupakan pengendali utama keseimbangan antara *bias* dan *variance* model. Pada TPE, importance tersebar lebih merata antar hiperparameter, mengindikasikan interaksi yang lebih kompleks antar parameter dalam metode Bayesian. `subsample` secara konsisten berada di peringkat 2–3, menunjukkan perannya yang penting dalam regularisasi melalui teknik *stochastic gradient boosting*.
 
-> **[GAMBAR 4.14 — Bar Chart Importance Hiperparameter terhadap F1 (TPE)]**
+> **[GAMBAR 4.13 — Bar Chart Importance Hiperparameter terhadap F1 (TPE)]**
 > *Deskripsi: Horizontal bar chart yang menampilkan kontribusi relatif setiap hiperparameter terhadap variasi F1-Score pada metode TPE. Panjang bar merepresentasikan proporsi pengaruh. File referensi: `importance_f1_tpe.png`.*
 
-Gambar 4.14 memvisualisasikan distribusi importance untuk metode TPE dalam format bar chart horizontal. Distribusi yang relatif merata antara `learning_rate` (0,28), `subsample` (0,20), dan `gamma` (0,13) menunjukkan bahwa TPE mengeksplorasi ruang hiperparameter secara lebih menyeluruh, tidak terlalu bergantung pada satu parameter tunggal. Pola ini konsisten dengan mekanisme Bayesian TPE yang secara aktif memodelkan interaksi antar hiperparameter.
+Gambar 4.13 memvisualisasikan distribusi importance untuk metode TPE dalam format bar chart horizontal. Distribusi yang relatif merata antara `learning_rate` (0,28), `subsample` (0,20), dan `gamma` (0,13) menunjukkan bahwa TPE mengeksplorasi ruang hiperparameter secara lebih menyeluruh, tidak terlalu bergantung pada satu parameter tunggal. Pola ini konsisten dengan mekanisme Bayesian TPE yang secara aktif memodelkan interaksi antar hiperparameter.
 
-> **[GAMBAR 4.15 — Bar Chart Importance Hiperparameter terhadap F1 (NSGA-II)]**
+> **[GAMBAR 4.14 — Bar Chart Importance Hiperparameter terhadap F1 (NSGA-II)]**
 > *Deskripsi: Horizontal bar chart importance hiperparameter terhadap F1-Score pada metode NSGA-II, menunjukkan dominasi learning_rate yang lebih kuat. File referensi: `importance_f1_nsga-ii.png`.*
 
-Gambar 4.15 menunjukkan kontras yang tajam dengan TPE: `learning_rate` mendominasi hingga 69,34% dari total importance pada NSGA-II, sementara hiperparameter lainnya memiliki pengaruh yang relatif marginal. Konsentrasi ini mengisyaratkan bahwa variasi performa antar trial NSGA-II terutama didorong oleh perbedaan learning rate, sementara parameter lain berperan sebagai penyesuaian halus (*fine-tuning*).
+Gambar 4.14 menunjukkan kontras yang tajam dengan TPE: `learning_rate` mendominasi hingga 69,34% dari total importance pada NSGA-II, sementara hiperparameter lainnya memiliki pengaruh yang relatif marginal. Konsentrasi ini mengisyaratkan bahwa variasi performa antar trial NSGA-II terutama didorong oleh perbedaan learning rate, sementara parameter lain berperan sebagai penyesuaian halus (*fine-tuning*).
 
-> **[GAMBAR 4.16 — Bar Chart Importance Hiperparameter terhadap F1 (Random)]**
+> **[GAMBAR 4.15 — Bar Chart Importance Hiperparameter terhadap F1 (Random)]**
 > *Deskripsi: Horizontal bar chart importance hiperparameter terhadap F1-Score pada metode Random, dengan pola serupa NSGA-II di mana learning_rate mendominasi. File referensi: `importance_f1_random.png`.*
 
-Gambar 4.16 memperlihatkan pola yang serupa dengan NSGA-II di mana `learning_rate` mendominasi (0,6550). Kesamaan pola antara NSGA-II dan Random — yang keduanya mengeksplorasi ruang pencarian secara lebih luas — menunjukkan bahwa ketika eksplorasi bersifat global, variasi learning rate menjadi pembeda utama antar konfigurasi. Sebaliknya, TPE yang lebih terfokus (*exploitative*) menemukan region di mana learning rate sudah relatif terkontrol, sehingga parameter lain menjadi lebih berpengaruh.
+Gambar 4.15 memperlihatkan pola yang serupa dengan NSGA-II di mana `learning_rate` mendominasi (0,6550). Kesamaan pola antara NSGA-II dan Random — yang keduanya mengeksplorasi ruang pencarian secara lebih luas — menunjukkan bahwa ketika eksplorasi bersifat global, variasi learning rate menjadi pembeda utama antar konfigurasi. Sebaliknya, TPE yang lebih terfokus (*exploitative*) menemukan region di mana learning rate sudah relatif terkontrol, sehingga parameter lain menjadi lebih berpengaruh.
 
 #### Pengaruh Hiperparameter terhadap Latency
 
@@ -913,20 +909,20 @@ Gambar 4.16 memperlihatkan pola yang serupa dengan NSGA-II di mana `learning_rat
 
 Tabel 4.26 menampilkan hasil analisis importance untuk objektif latensi. Konsistensi yang ditemukan bahkan lebih kuat dibanding analisis F1: **`n_estimators` mendominasi pengaruh terhadap latensi di ketiga metode** dengan importance 0,66–0,75. Temuan ini mengkonfirmasi bahwa kompleksitas inferensi bersifat linear terhadap jumlah estimator: $T_{inference} \propto K \times D$, di mana $K$ adalah jumlah pohon dan $D$ rata-rata kedalaman. `max_depth` berada di peringkat kedua pada NSGA-II dan Random (importance ~0,13), karena kedalaman pohon menentukan jumlah perbandingan yang diperlukan per pohon.
 
-> **[GAMBAR 4.17 — Bar Chart Importance Hiperparameter terhadap Latency (TPE)]**
+> **[GAMBAR 4.16 — Bar Chart Importance Hiperparameter terhadap Latency (TPE)]**
 > *Deskripsi: Horizontal bar chart kontribusi relatif setiap hiperparameter terhadap variasi latensi inferensi pada metode TPE. File referensi: `importance_time_tpe.png`.*
 
-Gambar 4.17 memvisualisasikan dominasi `n_estimators` yang sangat kuat (75,34%) pada metode TPE. Hiperparameter lain nyaris tidak berpengaruh terhadap latensi, mengindikasikan bahwa dalam konfigurasi TPE — yang cenderung menghasilkan model dengan jumlah pohon bervariasi — jumlah pohon menjadi satu-satunya faktor yang menentukan kecepatan inferensi secara signifikan.
+Gambar 4.16 memvisualisasikan dominasi `n_estimators` yang sangat kuat (75,34%) pada metode TPE. Hiperparameter lain nyaris tidak berpengaruh terhadap latensi, mengindikasikan bahwa dalam konfigurasi TPE — yang cenderung menghasilkan model dengan jumlah pohon bervariasi — jumlah pohon menjadi satu-satunya faktor yang menentukan kecepatan inferensi secara signifikan.
 
-> **[GAMBAR 4.18 — Bar Chart Importance Hiperparameter terhadap Latency (NSGA-II)]**
+> **[GAMBAR 4.17 — Bar Chart Importance Hiperparameter terhadap Latency (NSGA-II)]**
 > *Deskripsi: Horizontal bar chart importance hiperparameter terhadap Latency pada metode NSGA-II, dengan `n_estimators` dominan dan `max_depth` sebagai faktor sekunder. File referensi: `importance_time_nsga-ii.png`.*
 
-Gambar 4.18 menunjukkan distribusi yang sedikit lebih tersebar dibanding TPE, dengan `max_depth` memberikan kontribusi 13,43% pada NSGA-II. Hal ini logis karena NSGA-II cenderung menghasilkan model dengan kedalaman yang lebih bervariasi, sehingga perbedaan kedalaman antar trial memberikan dampak latensi yang lebih terukur.
+Gambar 4.17 menunjukkan distribusi yang sedikit lebih tersebar dibanding TPE, dengan `max_depth` memberikan kontribusi 13,43% pada NSGA-II. Hal ini logis karena NSGA-II cenderung menghasilkan model dengan kedalaman yang lebih bervariasi, sehingga perbedaan kedalaman antar trial memberikan dampak latensi yang lebih terukur.
 
-> **[GAMBAR 4.19 — Bar Chart Importance Hiperparameter terhadap Latency (Random)]**
+> **[GAMBAR 4.18 — Bar Chart Importance Hiperparameter terhadap Latency (Random)]**
 > *Deskripsi: Horizontal bar chart importance hiperparameter terhadap Latency pada metode Random, menunjukkan pola serupa dengan NSGA-II. File referensi: `importance_time_random.png`.*
 
-Gambar 4.19 memperlihatkan pola yang konsisten dengan NSGA-II, di mana `n_estimators` (67,13%) dan `max_depth` (12,77%) merupakan dua faktor utama penentu latensi. Konsistensi pola ini lintas ketiga metode memperkuat validitas temuan dan memberikan panduan praktis bagi praktisi: **untuk mengurangi latensi inferensi pada model XGBoost, prioritaskan pengurangan jumlah pohon terlebih dahulu, kemudian kedalaman pohon**.
+Gambar 4.18 memperlihatkan pola yang konsisten dengan NSGA-II, di mana `n_estimators` (67,13%) dan `max_depth` (12,77%) merupakan dua faktor utama penentu latensi. Konsistensi pola ini lintas ketiga metode memperkuat validitas temuan dan memberikan panduan praktis bagi praktisi: **untuk mengurangi latensi inferensi pada model XGBoost, prioritaskan pengurangan jumlah pohon terlebih dahulu, kemudian kedalaman pohon**.
 
 ---
 
@@ -992,15 +988,15 @@ Perbandingan kepentingan fitur antar metode disajikan pada Tabel 4.28 untuk meng
 
 Tabel 4.28 mengkonfirmasi konsistensi peringkat fitur lintas metode: `MIN_TTL` dan `MAX_TTL` secara unanimous menduduki posisi pertama dan kedua, diikuti oleh `MIN_IP_PKT_LEN`, `SHORTEST_FLOW_PKT`, dan `DNS_QUERY_TYPE` yang saling bertukar posisi 3–5. Stabilitas peringkat ini menunjukkan bahwa model-model yang dihasilkan oleh metode optimasi berbeda tetap mengandalkan sinyal fitur yang sama untuk keputusan klasifikasi — bukti kuat bahwa pola diskriminatif yang dipelajari bersifat genuine dan bukan artefak dari proses pencarian hiperparameter tertentu.
 
-> **[GAMBAR 4.20 — Bar Chart Perbandingan Feature Importance Ketiga Metode]**
+> **[GAMBAR 4.19 — Bar Chart Perbandingan Feature Importance Ketiga Metode]**
 > *Deskripsi: Grouped horizontal bar chart yang menampilkan fitur terpenting untuk setiap metode secara berdampingan, memungkinkan identifikasi konsistensi dan perbedaan antar model. File referensi: `feature_importance_bar_comparison.png`.*
 
-Gambar 4.20 menyajikan perbandingan visual importance fitur antar metode dalam format *grouped bar chart*. Representasi ini memperjelas bahwa meskipun magnitude gain bervariasi antar metode (TPE cenderung lebih tinggi karena jumlah pohon lebih sedikit sehingga tiap split memberikan kontribusi rata-rata lebih besar), **urutan peringkat relatif sangat konsisten**. Pola ini memperkuat kepercayaan bahwa model telah mempelajari representasi fitur yang bermakna secara domain.
+Gambar 4.19 menyajikan perbandingan visual importance fitur antar metode dalam format *grouped bar chart*. Representasi ini memperjelas bahwa meskipun magnitude gain bervariasi antar metode (TPE cenderung lebih tinggi karena jumlah pohon lebih sedikit sehingga tiap split memberikan kontribusi rata-rata lebih besar), **urutan peringkat relatif sangat konsisten**. Pola ini memperkuat kepercayaan bahwa model telah mempelajari representasi fitur yang bermakna secara domain.
 
-> **[GAMBAR 4.21 — Heatmap Feature Importance Ketiga Metode]**
+> **[GAMBAR 4.20 — Heatmap Feature Importance Ketiga Metode]**
 > *Deskripsi: Heatmap yang menampilkan importance score untuk seluruh 49 fitur di ketiga metode, memungkinkan analisis pola kepentingan fitur secara holistik. File referensi: `feature_importance_heatmap_comparison.png`.*
 
-Gambar 4.21 memberikan pandangan holistik terhadap seluruh 49 fitur melalui format heatmap. Dari visualisasi ini teridentifikasi bahwa sebagian besar fitur memiliki kontribusi yang relatif kecil (area berwarna pudar), sementara segelintir fitur kunci (TTL, ukuran paket, DNS) mendominasi proses keputusan (area berwarna intens). Pola *sparse importance* ini konsisten dengan prinsip parsimoni dalam *machine learning* — model yang efektif sering kali mengandalkan sejumlah kecil fitur yang sangat informatif.
+Gambar 4.20 memberikan pandangan holistik terhadap seluruh 49 fitur melalui format heatmap. Dari visualisasi ini teridentifikasi bahwa sebagian besar fitur memiliki kontribusi yang relatif kecil (area berwarna pudar), sementara segelintir fitur kunci (TTL, ukuran paket, DNS) mendominasi proses keputusan (area berwarna intens). Pola *sparse importance* ini konsisten dengan prinsip parsimoni dalam *machine learning* — model yang efektif sering kali mengandalkan sejumlah kecil fitur yang sangat informatif.
 
 **Interpretasi domain dari fitur-fitur terpenting:**
 
@@ -1023,10 +1019,10 @@ Validasi akhir suatu model klasifikasi tidak cukup hanya melalui evaluasi metrik
 
 Validasi akhir dari model klasifikasi memerlukan pengujian dalam konteks yang mendekati skenario penerapan sesungguhnya. Untuk tujuan ini, dikembangkan prototipe **Network Intrusion Detection System (NIDS)** berbasis web menggunakan framework **Streamlit** yang mensimulasikan proses deteksi intrusi secara *near real-time*. Prototipe ini memuat model-model Pareto-optimal yang telah diekspor dari tahap pelatihan dan menjalankan inferensi pada data simulasi paket demi paket, meniru operasional *inline* NIDS pada jaringan aktif.
 
-> **[GAMBAR 4.22 — Tampilan Dashboard Utama NIDS (State Awal)]**
+> **[GAMBAR 4.21 — Tampilan Dashboard Utama NIDS (State Awal)]**
 > *Deskripsi: Screenshot halaman utama dashboard yang menampilkan panel kontrol pada sidebar kiri (pemilihan model, skenario, dan parameter simulasi) serta area dashboard utama pada sisi kanan (indikator status, gauge latensi, dan tabel log deteksi) dalam state awal sebelum simulasi dijalankan. Ambil screenshot dari aplikasi Streamlit yang telah di-deploy.*
 
-Gambar 4.22 menampilkan tampilan awal dashboard NIDS yang terdiri dari dua area utama: sidebar kiri berfungsi sebagai panel kontrol yang memuat seluruh parameter konfigurasi simulasi, sementara area utama di sisi kanan menyajikan indikator status, metrik latensi, dan tabel riwayat deteksi. Desain antarmuka mengikuti prinsip *progressive disclosure* dengan pengaturan teknis di sidebar agar fokus pengguna tetap pada informasi deteksi di area utama.
+Gambar 4.21 menampilkan tampilan awal dashboard NIDS yang terdiri dari dua area utama: sidebar kiri berfungsi sebagai panel kontrol yang memuat seluruh parameter konfigurasi simulasi, sementara area utama di sisi kanan menyajikan indikator status, metrik latensi, dan tabel riwayat deteksi. Desain antarmuka mengikuti prinsip *progressive disclosure* dengan pengaturan teknis di sidebar agar fokus pengguna tetap pada informasi deteksi di area utama.
 
 **Arsitektur Pipeline Aplikasi:**
 
@@ -1138,10 +1134,10 @@ Data simulasi (`simulation_data.csv`) berisi 2.000 sampel yang telah distandardi
 
 Skenario baseline dirancang untuk mengukur **kinerja dasar** model dengan hanya menggunakan data berlabel Normal (kelas 0). Tujuan utamanya adalah mengukur latensi inferensi baseline dan mengidentifikasi adanya **False Positive** — situasi di mana model salah memicu alarm pada trafik yang sebenarnya normal.
 
-> **[GAMBAR 4.23 — Screenshot Dashboard saat Skenario Baseline Berjalan]**
+> **[GAMBAR 4.22 — Screenshot Dashboard saat Skenario Baseline Berjalan]**
 > *Deskripsi: Screenshot yang menampilkan dashboard dengan indikator hijau stabil (Normal ✅), gauge latensi berada di zona hijau, penghitung FP tetap nol, dan tabel log menunjukkan seluruh prediksi adalah "Normal" dengan confidence tinggi. Ambil screenshot dari aplikasi Streamlit.*
 
-Gambar 4.23 mendokumentasikan jalannya skenario baseline pada dashboard. Indikator status mempertahankan warna hijau sepanjang simulasi, gauge latensi berada di zona aman (di bawah threshold 70 ms), dan seluruh baris pada tabel log menampilkan prediksi "Normal" — menunjukkan bahwa model berhasil mengklasifikasikan seluruh trafik normal dengan benar. Hasil ini konsisten dengan skor precision Normal = 1,0000 yang teramati pada evaluasi test set sebelumnya (Tabel 4.18–4.20), mengkonfirmasi bahwa model memiliki tingkat *false alarm* yang sangat rendah.
+Gambar 4.22 mendokumentasikan jalannya skenario baseline pada dashboard. Indikator status mempertahankan warna hijau sepanjang simulasi, gauge latensi berada di zona aman (di bawah threshold 70 ms), dan seluruh baris pada tabel log menampilkan prediksi "Normal" — menunjukkan bahwa model berhasil mengklasifikasikan seluruh trafik normal dengan benar. Hasil ini konsisten dengan skor precision Normal = 1,0000 yang teramati pada evaluasi test set sebelumnya (Tabel 4.18–4.20), mengkonfirmasi bahwa model memiliki tingkat *false alarm* yang sangat rendah.
 
 Ekspektasi pengujian pada skenario baseline:
 - Seluruh prediksi menghasilkan label "Normal" dengan confidence tinggi
@@ -1189,15 +1185,15 @@ Kode Program 4.14 menampilkan logika inti simulasi loop pada dashboard, mencakup
 
 Kode Program 4.14 menjelaskan alur eksekusi simulasi per paket pada dashboard: data diambil bertahap, diprediksi oleh engine, diklasifikasikan ke outcome TP/TN/FP/FN, metrik sesi diperbarui real-time, dan simulasi dapat dihentikan otomatis saat serangan terdeteksi.
 
-> **[GAMBAR 4.24 — Screenshot Dashboard saat Serangan Terdeteksi (True Positive)]**
+> **[GAMBAR 4.23 — Screenshot Dashboard saat Serangan Terdeteksi (True Positive)]**
 > *Deskripsi: Screenshot yang menangkap momen deteksi serangan — indikator berubah merah (🚨 Attack), kartu alert merah muncul menandakan True Positive, confidence score dan label prediksi ditampilkan, serta baris tabel log berwarna merah mengidentifikasi paket serangan. Ambil screenshot dari aplikasi Streamlit.*
 
-Gambar 4.24 menangkap momen krusial saat model berhasil mendeteksi paket serangan (*True Positive*). Transisi visual dari indikator hijau ke merah, kemunculan kartu alert animasi, dan pewarnaan baris tabel log secara kolektif memberikan *situational awareness* yang segera kepada operator NIDS. Confidence score yang ditampilkan memungkinkan operator menilai tingkat keyakinan model terhadap keputusannya, menjadi dasar untuk proses triase dan eskalasi insiden.
+Gambar 4.23 menangkap momen krusial saat model berhasil mendeteksi paket serangan (*True Positive*). Transisi visual dari indikator hijau ke merah, kemunculan kartu alert animasi, dan pewarnaan baris tabel log secara kolektif memberikan *situational awareness* yang segera kepada operator NIDS. Confidence score yang ditampilkan memungkinkan operator menilai tingkat keyakinan model terhadap keputusannya, menjadi dasar untuk proses triase dan eskalasi insiden.
 
-> **[GAMBAR 4.25 — Screenshot Grafik Ringkasan Pasca-Simulasi]**
+> **[GAMBAR 4.24 — Screenshot Grafik Ringkasan Pasca-Simulasi]**
 > *Deskripsi: Screenshot yang menampilkan tiga grafik ringkasan yang muncul setelah simulasi selesai: (1) Donut chart distribusi outcome (TP/TN/FP/FN) menunjukkan proporsi deteksi yang benar dan salah, (2) Bar chart distribusi label prediksi per kelas, dan (3) Line chart latensi per paket dengan garis threshold 70 ms dan garis rata-rata. Ambil screenshot dari aplikasi Streamlit.*
 
-Gambar 4.25 menyajikan analisis retrospektif pasca-simulasi melalui tiga grafik ringkasan. Donut chart memberikan gambaran keseluruhan proporsi outcome deteksi, memungkinkan evaluasi cepat terhadap akurasi model. Bar chart distribusi prediksi menunjukkan bagaimana model mengklasifikasikan paket-paket ke setiap kelas. Line chart latensi memetakan profil waktu inferensi per paket, menunjukkan stabilitas dan konsistensi kecepatan model sepanjang sesi simulasi — informasi yang vital untuk memastikan NIDS mampu mempertahankan throughput yang memadai dalam operasional jangka panjang.
+Gambar 4.24 menyajikan analisis retrospektif pasca-simulasi melalui tiga grafik ringkasan. Donut chart memberikan gambaran keseluruhan proporsi outcome deteksi, memungkinkan evaluasi cepat terhadap akurasi model. Bar chart distribusi prediksi menunjukkan bagaimana model mengklasifikasikan paket-paket ke setiap kelas. Line chart latensi memetakan profil waktu inferensi per paket, menunjukkan stabilitas dan konsistensi kecepatan model sepanjang sesi simulasi — informasi yang vital untuk memastikan NIDS mampu mempertahankan throughput yang memadai dalam operasional jangka panjang.
 
 Ekspektasi pengujian pada skenario injection:
 - Indikator berubah dari hijau ke merah secara tepat saat paket serangan terdeteksi
@@ -1271,30 +1267,29 @@ Ekspektasi pengujian pada skenario injection:
 | No. | Nomor | Judul Gambar | File Referensi |
 |---|---|---|---|
 | 1 | Gambar 4.1 | Diagram Distribusi Kelas Dataset | `distribusi_dan_bobot_skripsi.png` |
-| 2 | Gambar 4.2 | Visualisasi Distribusi Bobot dan Efektif Sampel | `distribusi_dan_bobot_skripsi.png` |
-| 3 | Gambar 4.3 | Dampak Pembobotan terhadap Distribusi Kelas | `impact_weighting_skripsi.png` |
-| 4 | Gambar 4.4 | Grafik Riwayat Optimasi | `optimization_history_final.png` |
-| 5 | Gambar 4.5 | Pareto Front Statis (Ketiga Metode) | `pareto_front_static_hd.png` |
-| 6 | Gambar 4.6 | Diagram Batang Perbandingan Metrik | `metrics_grouped_bar.png` |
-| 7 | Gambar 4.7 | Heatmap F1-Score per Kelas per Metode | `metrics_f1_heatmap.png` |
-| 8 | Gambar 4.8 | Scatter Plot Precision vs Recall | `metrics_pr_scatter.png` |
-| 9 | Gambar 4.9 | Ringkasan Recall per Kelas | `recall_summary_chart.png` |
-| 10 | Gambar 4.10 | Confusion Matrix Raw | `cm_raw_heatmap.png` |
-| 11 | Gambar 4.11 | Confusion Matrix Normalized | `cm_norm_heatmap.png` |
-| 12 | Gambar 4.12 | Perbandingan Cohen's Kappa | `kappa_comparison.png` |
-| 13 | Gambar 4.13 | Boxplot Cross-Validation | `cv_stats_boxplot.png` |
-| 14 | Gambar 4.14 | Importance Hiperparameter F1 (TPE) | `importance_f1_tpe.png` |
-| 15 | Gambar 4.15 | Importance Hiperparameter F1 (NSGA-II) | `importance_f1_nsga-ii.png` |
-| 16 | Gambar 4.16 | Importance Hiperparameter F1 (Random) | `importance_f1_random.png` |
-| 17 | Gambar 4.17 | Importance Hiperparameter Latency (TPE) | `importance_time_tpe.png` |
-| 18 | Gambar 4.18 | Importance Hiperparameter Latency (NSGA-II) | `importance_time_nsga-ii.png` |
-| 19 | Gambar 4.19 | Importance Hiperparameter Latency (Random) | `importance_time_random.png` |
-| 20 | Gambar 4.20 | Feature Importance Bar (Perbandingan) | `feature_importance_bar_comparison.png` |
-| 21 | Gambar 4.21 | Feature Importance Heatmap | `feature_importance_heatmap_comparison.png` |
-| 22 | Gambar 4.22 | Dashboard Utama NIDS (State Awal) | *Screenshot dari Streamlit* |
-| 23 | Gambar 4.23 | Dashboard Skenario Baseline | *Screenshot dari Streamlit* |
-| 24 | Gambar 4.24 | Dashboard Serangan Terdeteksi (TP) | *Screenshot dari Streamlit* |
-| 25 | Gambar 4.25 | Grafik Ringkasan Pasca-Simulasi | *Screenshot dari Streamlit* |
+| 2 | Gambar 4.2 | Dampak Pembobotan terhadap Distribusi Kelas | `impact_weighting_skripsi.png` |
+| 3 | Gambar 4.3 | Grafik Riwayat Optimasi | `optimization_history_final.png` |
+| 4 | Gambar 4.4 | Pareto Front Statis (Ketiga Metode) | `pareto_front_static_hd.png` |
+| 5 | Gambar 4.5 | Diagram Batang Perbandingan Metrik | `metrics_grouped_bar.png` |
+| 6 | Gambar 4.6 | Heatmap F1-Score per Kelas per Metode | `metrics_f1_heatmap.png` |
+| 7 | Gambar 4.7 | Scatter Plot Precision vs Recall | `metrics_pr_scatter.png` |
+| 8 | Gambar 4.8 | Ringkasan Recall per Kelas | `recall_summary_chart.png` |
+| 9 | Gambar 4.9 | Confusion Matrix Raw | `cm_raw_heatmap.png` |
+| 10 | Gambar 4.10 | Confusion Matrix Normalized | `cm_norm_heatmap.png` |
+| 11 | Gambar 4.11 | Perbandingan Cohen's Kappa | `kappa_comparison.png` |
+| 12 | Gambar 4.12 | Boxplot Cross-Validation | `cv_stats_boxplot.png` |
+| 13 | Gambar 4.13 | Importance Hiperparameter F1 (TPE) | `importance_f1_tpe.png` |
+| 14 | Gambar 4.14 | Importance Hiperparameter F1 (NSGA-II) | `importance_f1_nsga-ii.png` |
+| 15 | Gambar 4.15 | Importance Hiperparameter F1 (Random) | `importance_f1_random.png` |
+| 16 | Gambar 4.16 | Importance Hiperparameter Latency (TPE) | `importance_time_tpe.png` |
+| 17 | Gambar 4.17 | Importance Hiperparameter Latency (NSGA-II) | `importance_time_nsga-ii.png` |
+| 18 | Gambar 4.18 | Importance Hiperparameter Latency (Random) | `importance_time_random.png` |
+| 19 | Gambar 4.19 | Feature Importance Bar (Perbandingan) | `feature_importance_bar_comparison.png` |
+| 20 | Gambar 4.20 | Feature Importance Heatmap | `feature_importance_heatmap_comparison.png` |
+| 21 | Gambar 4.21 | Dashboard Utama NIDS (State Awal) | *Screenshot dari Streamlit* |
+| 22 | Gambar 4.22 | Dashboard Skenario Baseline | *Screenshot dari Streamlit* |
+| 23 | Gambar 4.23 | Dashboard Serangan Terdeteksi (TP) | *Screenshot dari Streamlit* |
+| 24 | Gambar 4.24 | Grafik Ringkasan Pasca-Simulasi | *Screenshot dari Streamlit* |
 
 ---
 
@@ -1304,6 +1299,6 @@ Ekspektasi pengujian pada skenario injection:
 > - Semua teks dalam blok `> **[KODE PROGRAM X.X — ...]**` menandai posisi di mana potongan kode program harus disisipkan. Nomor baris pada kode berfungsi sebagai referensi penjelasan.
 > - Setiap tabel dan gambar telah dilengkapi paragraf deskripsi/penjelasan di bawahnya yang menjelaskan isi, signifikansi, dan interpretasi.
 > - File PNG referensi tersedia di arsip output notebook (`ARSIP_LENGKAP_SKRIPSI_20260212_0748.zip`, ukuran 189,29 MB).
-> - Gambar 4.22–4.25 perlu diambil secara manual sebagai screenshot dari aplikasi Streamlit yang telah di-deploy.
+> - Gambar 4.20–4.24 perlu diambil secara manual sebagai screenshot dari aplikasi Streamlit yang telah di-deploy.
 > - Format angka menggunakan koma desimal (Indonesia) sesuai standar penulisan skripsi.
 > - Seluruh angka diambil langsung dari output eksperimen notebook tanpa pembulatan tambahan.
