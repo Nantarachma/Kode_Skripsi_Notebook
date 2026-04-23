@@ -63,6 +63,8 @@ Kode Program 4.1 menampilkan potongan kode konfigurasi lingkungan eksperimen dan
 18  test_model.fit(X_test, y_test, verbose=False)
 ```
 
+Kode Program 4.1 menunjukkan bahwa seluruh pustaka inti penelitian berhasil diinisialisasi dengan baik, seed acak telah ditetapkan untuk menjaga reprodusibilitas, dan eksekusi pelatihan singkat pada `XGBClassifier` berbasis CUDA memvalidasi bahwa akselerasi GPU aktif sebelum eksperimen utama dijalankan.
+
 ---
 
 ### 4.1.2 Karakteristik Dataset Terpilih
@@ -123,6 +125,8 @@ Kode Program 4.2 menunjukkan proses pemuatan dataset dan pemetaan 10 kategori se
 16      stratify=df_full['mapped_label']
 17  )
 ```
+
+Kode Program 4.2 menegaskan alur awal data: dataset dibaca dari sumber utama, label serangan dipetakan menjadi empat kelas target, lalu dilakukan pemisahan train-test secara stratifikasi agar distribusi kelas tetap konsisten pada kedua subset.
 
 ---
 
@@ -219,6 +223,8 @@ Kode Program 4.3 menampilkan proses pembersihan kolom identitas, penanganan nila
 14  X_test_final_raw.fillna(train_medians, inplace=True)
 ```
 
+Kode Program 4.3 memperlihatkan tahap sanitasi data yang krusial, yaitu menghapus kolom berisiko bias/leakage, mengonversi nilai tak hingga menjadi NaN, lalu melakukan imputasi median berbasis data latih agar kualitas data tetap terjaga tanpa kebocoran informasi.
+
 
 ---
 
@@ -281,6 +287,8 @@ Kode Program 4.4 menampilkan proses standardisasi fitur dan pembagian data menja
 12  )
 ```
 
+Kode Program 4.4 menunjukkan implementasi standardisasi berbasis Z-score dengan prinsip *fit-on-train, transform-on-all*, dilanjutkan konversi tipe numerik untuk efisiensi memori dan pembagian train-validasi terstratifikasi guna menjaga proporsi kelas.
+
 ---
 
 ### 4.3.2 Distribusi Bobot Penanganan Imbalance
@@ -329,6 +337,8 @@ Kode Program 4.5 menampilkan implementasi strategi *Hybrid Cost-Sensitive Weight
 2  sample_weights_train = np.sqrt(raw_weights)
 3  sample_weights_train = sample_weights_train / sample_weights_train.mean()
 ```
+
+Kode Program 4.5 merangkum strategi pembobotan hybrid: bobot seimbang dihitung dari distribusi kelas, dilunakkan dengan akar kuadrat agar tidak terlalu ekstrem, lalu dinormalisasi sehingga rata-rata bobot tetap 1 dan proses pelatihan lebih stabil.
 
 
 ---
@@ -412,6 +422,8 @@ Kode Program 4.6 menampilkan definisi fungsi objective multi-objective yang digu
 29      return f1_macro, latency_us
 ```
 
+Kode Program 4.6 menggambarkan fungsi objektif multi-objective yang menjadi inti optimasi: setiap trial menghasilkan kombinasi hiperparameter baru, model dilatih pada data berbobot, lalu dievaluasi berdasarkan dua sasaran sekaligus, yaitu F1 Macro (maksimasi) dan latensi inferensi (minimasi).
+
 Kode Program 4.7 menampilkan konfigurasi dan eksekusi optimasi menggunakan tiga metode sampling Optuna secara berurutan.
 
 > **[KODE PROGRAM 4.7 — Konfigurasi & Eksekusi Optimasi Optuna]**
@@ -442,6 +454,8 @@ Kode Program 4.7 menampilkan konfigurasi dan eksekusi optimasi menggunakan tiga 
 22  )
 23  study_random.optimize(objective_xgboost_multi, n_trials=N_TRIALS)
 ```
+
+Kode Program 4.7 menegaskan desain eksperimen yang adil, di mana ketiga sampler Optuna (TPE, NSGA-II, dan Random) dijalankan pada jumlah trial dan seed yang sama sehingga perbandingan performa antar metode dilakukan dalam kondisi yang setara.
 
 > **[GAMBAR 4.4 — Grafik Riwayat Optimasi (Optimization History)]**
 > *Deskripsi: Grafik garis yang menunjukkan dinamika pencarian per trial untuk ketiga metode, menampilkan evolusi F1-Score dan Latency sepanjang 30 trial. File referensi: `optimization_history_final.png`.*
@@ -589,6 +603,8 @@ Kode Program 4.8 menampilkan proses retrain model dengan parameter terbaik dari 
 21
 22      return model, preds, latency_us
 ```
+
+Kode Program 4.8 menunjukkan prosedur evaluasi final yang sistematis: memilih trial Pareto terbaik berdasarkan F1, melatih ulang model dengan parameter terpilih, lalu menghitung prediksi dan latensi pada data uji holdout untuk menghasilkan metrik komparatif akhir.
 
 > **[GAMBAR 4.6 — Diagram Batang Perbandingan Metrik antar Metode]**
 > *Deskripsi: Grouped bar chart yang membandingkan F1-Macro, Accuracy, Latency, dan Training Time untuk ketiga metode secara berdampingan. File referensi: `metrics_grouped_bar.png`.*
@@ -738,6 +754,8 @@ Kode Program 4.9 menampilkan proses perhitungan Cohen's Kappa dan analisis pola 
 19                  })
 ```
 
+Kode Program 4.9 memperlihatkan dua analisis reliabilitas secara berurutan, yaitu perhitungan skor Cohen’s Kappa per metode untuk menilai kesepakatan prediksi, serta ekstraksi kesalahan off-diagonal confusion matrix untuk mengidentifikasi pola misklasifikasi yang paling dominan.
+
 ---
 
 ### 4.5.3 Validasi Signifikansi Statistik (Kruskal-Wallis)
@@ -811,6 +829,8 @@ Kode Program 4.10 menampilkan proses cross-validation 5-fold dan uji statistik K
 24  stat, p = kruskal(*[cv_results[m]["f1_scores"] for m in cv_results])
 ```
 
+Kode Program 4.10 menunjukkan kerangka validasi statistik yang lengkap: performa model diuji pada skema Stratified 5-Fold untuk memperoleh distribusi skor lintas fold, kemudian diuji dengan Kruskal-Wallis guna menilai signifikansi perbedaan antar metode.
+
 
 ---
 
@@ -851,6 +871,8 @@ Kode Program 4.11 menampilkan fungsi inti analisis importance menggunakan Random
 21      importances = pd.Series(model.feature_importances_, index=X.columns)
 22      return importances.sort_values(ascending=False)
 ```
+
+Kode Program 4.11 mengimplementasikan pendekatan surrogate model, yakni menggunakan Random Forest Regressor untuk memodelkan hubungan antara hiperparameter dan nilai objektif, lalu menurunkan tingkat kepentingan masing-masing hiperparameter dari skor feature importance model surrogate.
 
 #### Pengaruh Hiperparameter terhadap F1-Score
 
@@ -936,6 +958,8 @@ Kode Program 4.12 menampilkan proses ekstraksi feature importance berbasis Gain 
 16  top_20_global = [x[0] for x in sorted(
 17      global_scores.items(), key=lambda x: x[1], reverse=True)[:20]]
 ```
+
+Kode Program 4.12 memperlihatkan cara menghimpun feature importance berbasis Gain dari setiap model, kemudian mengagregasikannya menjadi skor global sehingga fitur-fitur paling berpengaruh dapat diidentifikasi secara konsisten lintas metode optimasi.
 
 > **[TABEL 4.27 — Top 10 Fitur Terpenting (Rata-rata Gain dari Ketiga Metode)]**
 
@@ -1050,6 +1074,8 @@ Kode Program 4.13 menampilkan pipeline inferensi inti pada dashboard, mencakup p
 28      return features.values
 ```
 
+Kode Program 4.13 menggambarkan fondasi pipeline inferensi pada dashboard NIDS, mulai dari pemuatan artefak model secara efisien, prediksi probabilitas dengan pengukuran latensi presisi tinggi, hingga penyiapan urutan fitur agar konsisten dengan skema pelatihan.
+
 Detail komponen antarmuka didokumentasikan pada Tabel 4.29 dan 4.30.
 
 > **[TABEL 4.29 — Komponen Panel Kontrol (Sidebar)]**
@@ -1160,6 +1186,8 @@ Kode Program 4.14 menampilkan logika inti simulasi loop pada dashboard, mencakup
 25  if auto_stop and is_pred_attack:
 26      st.session_state.run = False
 ```
+
+Kode Program 4.14 menjelaskan alur eksekusi simulasi per paket pada dashboard: data diambil bertahap, diprediksi oleh engine, diklasifikasikan ke outcome TP/TN/FP/FN, metrik sesi diperbarui real-time, dan simulasi dapat dihentikan otomatis saat serangan terdeteksi.
 
 > **[GAMBAR 4.24 — Screenshot Dashboard saat Serangan Terdeteksi (True Positive)]**
 > *Deskripsi: Screenshot yang menangkap momen deteksi serangan — indikator berubah merah (🚨 Attack), kartu alert merah muncul menandakan True Positive, confidence score dan label prediksi ditampilkan, serta baris tabel log berwarna merah mengidentifikasi paket serangan. Ambil screenshot dari aplikasi Streamlit.*
