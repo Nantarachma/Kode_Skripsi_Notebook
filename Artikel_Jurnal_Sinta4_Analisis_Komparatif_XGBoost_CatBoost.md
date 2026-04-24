@@ -27,7 +27,7 @@ Penelitian ini berkontribusi pada: (1) pelaporan lengkap hasil komparasi baselin
 
 ## 2. METODE PENELITIAN
 
-Metode penelitian disederhanakan menjadi alur tunggal: penyiapan lingkungan, audit data, split dan preprocessing seragam, pelatihan dua model baseline, lalu evaluasi kualitas dan efisiensi.
+Metode penelitian disederhanakan menjadi alur tunggal agar mudah dipahami: penyiapan lingkungan, audit data, split dan preprocessing seragam, pelatihan dua model baseline, lalu evaluasi kualitas dan efisiensi.
 
 **Gambar 1. Alur ringkas penelitian komparatif XGBoost dan CatBoost.**
 
@@ -41,7 +41,7 @@ flowchart TD
     F --> G[Analisis per kelas dan keputusan model]
 ```
 
-Gambar 1 memperlihatkan urutan proses inti secara end-to-end agar alur eksperimen mudah direplikasi.
+Gambar 1 memperlihatkan urutan proses inti secara menyeluruh agar alur eksperimen mudah direplikasi.
 
 ### 2.1 Ringkasan Setup dan Data
 
@@ -60,7 +60,12 @@ Tabel 1 menegaskan konteks eksperimen: skala data besar dan ketidakseimbangan ke
 
 ### 2.2 Split, Preprocessing, dan Model
 
-Data dideduplikasi, lalu dibagi dengan *stratified split* 80:20. Target diencode dengan `LabelEncoder` pada train-test, sedangkan preprocessing fitur dibuat identik untuk kedua model: penanganan `inf/-inf`, imputasi median numerik, imputasi `MISSING/UNKNOWN` kategorikal, dan pembobotan kelas melalui `sample_weight`.
+Tahap data dibuat ringkas dan konsisten untuk kedua model:
+- Deduplikasi data.
+- *Stratified split* 80:20.
+- *Label encoding* target pada train dan test.
+- Preprocessing fitur yang sama: penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal.
+- Pembobotan kelas melalui `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -77,7 +82,11 @@ Tabel 2 menunjukkan konfigurasi baseline dibuat sebanding agar komparasi tetap a
 
 ### 2.3 Protokol Evaluasi
 
-Evaluasi menggunakan Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, ROC-AUC, waktu training, total inferensi, latensi per sampel, dan 5-fold *Stratified CV* (weighted F1). Keputusan model ditetapkan dengan prioritas **F1 lalu Recall**.
+Evaluasi disusun dalam dua kelompok metrik:
+- **Kualitas deteksi**: Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, dan ROC-AUC.
+- **Efisiensi operasional**: waktu training, total inferensi, dan latensi per sampel.
+
+Validasi tambahan dilakukan dengan 5-fold *Stratified CV* (weighted F1). Keputusan model ditetapkan dengan prioritas **F1 lalu Recall**.
 
 ## 3. HASIL DAN PEMBAHASAN
 
@@ -90,7 +99,7 @@ Evaluasi menggunakan Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, RO
 | XGBoost | 0,9901 | 0,8547 | 0,9915 | 0,9901 | 0,9903 | 0,9061 | 0,9901±0,0001 | 54,995 | 0,0042 |
 | CatBoost | 0,9861 | 0,8361 | 0,9894 | 0,9861 | 0,9865 | 0,8677 | 0,9863±0,0001 | 34,386 | 0,0017 |
 
-Tabel 3 menunjukkan XGBoost unggul pada kualitas deteksi, sedangkan CatBoost unggul pada efisiensi komputasi.
+Tabel 3 menunjukkan pola yang jelas: XGBoost unggul pada kualitas deteksi, sedangkan CatBoost unggul pada efisiensi komputasi.
 
 **Gambar 2. Visual kompak perbandingan kualitas dan efisiensi antar model.**  
 Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced Accuracy, MCC) dan metrik operasional (waktu training, latensi inferensi).
@@ -107,14 +116,14 @@ Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced A
 | F1 kelas Worms | 0,7188 | 0,3218 | XGBoost jauh lebih konsisten |
 | F1 kelas Backdoor | 0,9378 | 0,7588 | XGBoost unggul signifikan |
 
-Tabel 4 menegaskan bahwa CatBoost kadang memberi *recall* tinggi pada kelas langka, tetapi XGBoost lebih konsisten menjaga keseimbangan precision-recall (F1).
+Tabel 4 menegaskan bahwa CatBoost kadang memberi *recall* tinggi pada kelas langka, tetapi XGBoost lebih konsisten menjaga keseimbangan precision-recall (F1) lintas kelas.
 
 **Gambar 3. Ringkasan pola confusion matrix per model.**  
 Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabil pada mayoritas kelas serangan, sementara CatBoost menunjukkan kompromi precision pada beberapa kelas minoritas.
 
 ### 3.3 Implikasi Implementasi
 
-Secara praktis, pemilihan model mengikuti prioritas sistem:
+Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem:
 - **Prioritas kualitas deteksi**: gunakan **XGBoost**.
 - **Prioritas latensi rendah**: gunakan **CatBoost**.
 
