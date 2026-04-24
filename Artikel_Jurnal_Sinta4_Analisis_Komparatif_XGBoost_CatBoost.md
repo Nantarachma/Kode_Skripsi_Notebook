@@ -61,7 +61,7 @@ Rasio 14.162,85x membuat model berisiko bias ke kelas mayoritas, sehingga dipaka
 
 ### 2.2 Split, Preprocessing, dan Model
 
-Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, dilanjutkan dengan *stratified split* 80:20, kemudian *label encoding* target pada train dan test. Setelah itu, preprocessing fitur dibuat seragam melalui penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal, lalu ditutup dengan pembobotan kelas menggunakan `sample_weight`.
+Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, lalu dilanjutkan dengan *stratified split* 80:20. Setelah pembagian data, target pada train dan test diolah dengan *label encoding*. Tahap berikutnya adalah preprocessing fitur yang sama untuk kedua model, yaitu penanganan `inf/-inf`, imputasi median numerik, dan imputasi `MISSING/UNKNOWN` kategorikal. Proses ditutup dengan pembobotan kelas menggunakan `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -119,7 +119,7 @@ Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem. Untuk kual
 
 ## 4. KETERBATASAN PENELITIAN
 
-Keterbatasan studi ini terletak pada konfigurasi yang masih baseline dan belum melalui tuning hiperparameter menyeluruh. Selain itu, evaluasi hanya dilakukan pada satu dataset sehingga generalisasi lintas dataset belum dapat dipastikan. Analisis metrik operasional lanjutan seperti memori, throughput, dan energi juga belum dibahas secara detail.
+Keterbatasan pertama adalah konfigurasi model yang masih baseline dan belum melalui tuning hiperparameter menyeluruh. Keterbatasan kedua, evaluasi hanya dilakukan pada satu dataset sehingga generalisasi lintas dataset belum dapat dipastikan. Keterbatasan ketiga, analisis metrik operasional lanjutan seperti memori, throughput, dan energi belum dibahas secara detail.
 
 ## 5. KESIMPULAN DAN SARAN
 
