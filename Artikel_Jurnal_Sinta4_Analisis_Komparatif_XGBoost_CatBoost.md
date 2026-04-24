@@ -51,7 +51,7 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux 6.6.113+, Python 3.12.12) deng
 
 Tabel 1 memastikan seluruh komponen eksperimen terdokumentasi, sehingga hasil dapat diulang pada konfigurasi perangkat lunak yang setara.
 
-**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada sistem deteksi intrusi (IDS) multikelas.**
+**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada intrusion detection system/sistem deteksi intrusi (IDS) multikelas.**
 
 ```mermaid
 flowchart TD
@@ -66,7 +66,7 @@ flowchart TD
     I --> J[Kesimpulan Komparasi Model]
 ```
 
-Gambar 1 merangkum alur ujung-ke-ujung penelitian, sehingga urutan tahapan dari data mentah sampai keputusan model dapat dibaca secara cepat.
+Gambar 1 merangkum alur penelitian secara menyeluruh, sehingga urutan tahapan dari data mentah sampai keputusan model dapat dibaca secara cepat.
 
 ### 2.2 Pemanggilan Dataset dan Audit Awal
 
@@ -165,7 +165,7 @@ Tabel 5 menunjukkan data latih dan data uji cukup besar untuk pelatihan model da
 
 Tabel 6 mengonfirmasi bahwa proporsi kelas di train dan test tetap konsisten karena penggunaan *stratified split*.
 
-Setelah *stratified split*, target multikelas di-*encode* menggunakan `LabelEncoder`. Selanjutnya, pipeline preprocessing fitur dibuat identik pada kedua model dengan urutan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
+Setelah *stratified split*, target multikelas pada data train dan test di-*encode* menggunakan `LabelEncoder`. Selanjutnya, pipeline preprocessing fitur dibuat identik pada kedua model dengan urutan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
 1. Pemisahan fitur numerik dan kategorikal
 2. Konversi `inf/-inf` menjadi `NaN`
 3. Imputasi median untuk fitur numerik
@@ -218,7 +218,7 @@ flowchart TD
     I --> J
 ```
 
-Gambar 3 memperjelas bahwa kedua model menerima perlakuan data yang sama sebelum tahap evaluasi.
+Gambar 3 memperjelas bahwa kedua model menerima perlakuan data yang sama dari tahap split hingga evaluasi.
 
 ### 2.4 Konfigurasi Baseline Model
 
