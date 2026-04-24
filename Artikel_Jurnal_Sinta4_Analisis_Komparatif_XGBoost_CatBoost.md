@@ -115,14 +115,20 @@ Tabel 4 memperlihatkan dominasi kelas *Benign* dibanding kelas minoritas seperti
 
 ```mermaid
 pie showData
-    title Distribusi Label Awal (Top-2 vs Lainnya)
+    title Distribusi Label Awal per Kelas
     "Benign" : 2237731
     "Exploits" : 42748
-    "8 kelas lainnya (gabungan)" : 84945
+    "Fuzzers" : 33816
+    "Generic" : 19651
+    "Reconnaissance" : 17074
+    "DoS" : 5980
+    "Backdoor" : 4659
+    "Shellcode" : 2381
+    "Analysis" : 1226
+    "Worms" : 158
 ```
 
 Gambar 2 menekankan bahwa mayoritas sampel berada di kelas *Benign*, sehingga strategi penanganan *imbalance* menjadi bagian inti metode.
-Kategori "8 kelas lainnya (gabungan)" pada visual ini terdiri dari **Fuzzers, Generic, Reconnaissance, DoS, Backdoor, Shellcode, Analysis,** dan **Worms**, sedangkan rincian lengkap tiap kelas tetap disajikan pada Tabel 4.
 
 ### 2.3 Split Data, Preprocessing, dan Penanganan Imbalance
 
@@ -199,8 +205,9 @@ Tabel 8 memperlihatkan bobot jauh lebih tinggi pada kelas minoritas untuk mengur
 ```mermaid
 flowchart LR
     A[Data setelah deduplikasi] --> B[Stratified Split 80:20]
-    B --> C[Preprocessing Numerik]
-    B --> D[Preprocessing Kategorikal]
+    B --> L[Label Encoding Target]
+    L --> C[Preprocessing Numerik]
+    L --> D[Preprocessing Kategorikal]
     C --> E[Gabung Fitur]
     D --> E
     E --> F[Hitung class weight & sample weight]
