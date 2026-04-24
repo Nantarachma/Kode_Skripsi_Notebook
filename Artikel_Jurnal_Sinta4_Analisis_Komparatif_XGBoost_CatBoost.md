@@ -51,11 +51,11 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux 6.6.113+, Python 3.12.12) deng
 
 Tabel 1 memastikan seluruh komponen eksperimen terdokumentasi, sehingga hasil dapat diulang pada konfigurasi perangkat lunak yang setara.
 
-**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada Sistem Deteksi Intrusi (IDS) multikelas.**
+**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada sistem deteksi intrusi (IDS) multikelas.**
 
 ```mermaid
 flowchart TD
-    A[Mulai] --> B[Pemanggilan Dataset NF-UNSW-NB15-v3]
+    A[Inisialisasi Penelitian] --> B[Pemanggilan Dataset NF-UNSW-NB15-v3]
     B --> C[Audit Data Awal: nilai hilang, duplikat, ketidakseimbangan]
     C --> D[Split Data Stratified 80:20]
     D --> E[Label Encoding Target]
@@ -63,7 +63,7 @@ flowchart TD
     F --> G[Pelatihan Baseline XGBoost & CatBoost]
     G --> H[Evaluasi Hold-out + 5-Fold CV]
     H --> I[Analisis Per Kelas & Ranking F1→Recall]
-    I --> J[Kesimpulan dan Rekomendasi Implementasi]
+    I --> J[Kesimpulan Komparasi Model]
 ```
 
 Gambar 1 merangkum alur ujung-ke-ujung penelitian, sehingga urutan tahapan dari data mentah sampai keputusan model dapat dibaca secara cepat.
@@ -112,7 +112,7 @@ Tabel 3 menegaskan dominasi fitur numerik, yang mendasari strategi imputasi medi
 
 Tabel 4 memperlihatkan dominasi kelas *Benign* dibanding kelas minoritas seperti *Worms* dan *Analysis*.
 
-**Gambar 2. Ringkasan visual ketimpangan kelas sebelum pembagian data.**
+**Gambar 2. Ringkasan visual distribusi ketidakseimbangan kelas sebelum pembagian data.**
 
 ```mermaid
 pie showData
@@ -165,13 +165,12 @@ Tabel 5 menunjukkan data latih dan data uji cukup besar untuk pelatihan model da
 
 Tabel 6 mengonfirmasi bahwa proporsi kelas di train dan test tetap konsisten karena penggunaan *stratified split*.
 
-Tahapan persiapan data dibuat identik pada kedua model dengan urutan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
+Setelah *stratified split*, target multikelas di-*encode* menggunakan `LabelEncoder`. Selanjutnya, pipeline preprocessing fitur dibuat identik pada kedua model dengan urutan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
 1. Pemisahan fitur numerik dan kategorikal
-2. Label encoding pada target multikelas
-3. Konversi `inf/-inf` menjadi `NaN`
-4. Imputasi median untuk fitur numerik
-5. Imputasi `MISSING` dan pemetaan `UNKNOWN` untuk fitur kategorikal
-6. Pembobotan kelas seimbang ke dalam `sample_weight`
+2. Konversi `inf/-inf` menjadi `NaN`
+3. Imputasi median untuk fitur numerik
+4. Imputasi `MISSING` dan pemetaan `UNKNOWN` untuk fitur kategorikal
+5. Pembobotan kelas seimbang ke dalam `sample_weight`
 
 **Tabel 7. Ringkasan preprocessing**
 
@@ -202,7 +201,7 @@ Tabel 7 menegaskan konsistensi praproses antar model agar perbandingan hasil tet
 
 Tabel 8 memperlihatkan bobot jauh lebih tinggi pada kelas minoritas untuk mengurangi bias model terhadap kelas mayoritas.
 
-**Gambar 3. Diagram pipeline preprocessing dan pelatihan model.**
+**Gambar 3. Diagram pipeline preprocessing data dan pelatihan model.**
 
 ```mermaid
 flowchart TD
