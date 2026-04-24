@@ -61,12 +61,7 @@ Rasio 14.162,85x membuat model berisiko bias ke kelas mayoritas, sehingga dipaka
 
 ### 2.2 Split, Preprocessing, dan Model
 
-Tahap data dibuat ringkas dan konsisten untuk kedua model:
-1. Deduplikasi data.
-2. *Stratified split* 80:20.
-3. *Label encoding* target pada train dan test.
-4. Preprocessing fitur yang sama: penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal.
-5. Pembobotan kelas melalui `sample_weight`.
+Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, dilanjutkan dengan *stratified split* 80:20, kemudian *label encoding* target pada train dan test. Setelah itu, preprocessing fitur dibuat seragam melalui penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal, lalu ditutup dengan pembobotan kelas menggunakan `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -83,11 +78,7 @@ Tabel 2 menunjukkan konfigurasi baseline dibuat sebanding agar komparasi tetap a
 
 ### 2.3 Protokol Evaluasi
 
-Evaluasi disusun dalam dua kelompok metrik:
-- **Kualitas deteksi**: Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, dan ROC-AUC.
-- **Efisiensi operasional**: waktu training, total inferensi, dan latensi per sampel.
-
-Validasi tambahan dilakukan dengan 5-fold *Stratified CV* (weighted F1). Keputusan model ditetapkan dengan prioritas **F1 lalu Recall**.
+Evaluasi disusun dalam dua kelompok metrik, yaitu kualitas deteksi (Accuracy, Balanced Accuracy, Precision, Recall, F1, MCC, dan ROC-AUC) serta efisiensi operasional (waktu training, total inferensi, dan latensi per sampel). Validasi tambahan dilakukan dengan 5-fold *Stratified CV* (weighted F1), sedangkan keputusan model ditetapkan dengan prioritas **F1 lalu Recall**.
 
 ## 3. HASIL DAN PEMBAHASAN
 
@@ -124,18 +115,11 @@ Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabi
 
 ### 3.3 Implikasi Implementasi
 
-Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem:
-- **Prioritas kualitas deteksi**: gunakan **XGBoost**.
-- **Prioritas latensi rendah**: gunakan **CatBoost**.
-
-Pendekatan ini lebih tepat daripada memakai accuracy tunggal karena mempertimbangkan ketidakseimbangan kelas dan kebutuhan operasional sekaligus.
+Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem. Untuk kualitas deteksi yang lebih kuat, model yang disarankan adalah **XGBoost**. Untuk kebutuhan latensi rendah, **CatBoost** tetap relevan sebagai alternatif. Pendekatan ini lebih tepat daripada memakai accuracy tunggal karena mempertimbangkan ketidakseimbangan kelas dan kebutuhan operasional sekaligus.
 
 ## 4. KETERBATASAN PENELITIAN
 
-Keterbatasan studi ini dirangkum dalam tiga poin utama:
-1. Konfigurasi masih baseline, belum tuning hiperparameter menyeluruh.
-2. Evaluasi hanya pada satu dataset, sehingga generalisasi lintas dataset belum dipastikan.
-3. Metrik operasional lanjutan (memori, throughput, energi) belum dianalisis detail.
+Keterbatasan studi ini terletak pada konfigurasi yang masih baseline dan belum melalui tuning hiperparameter menyeluruh. Selain itu, evaluasi hanya dilakukan pada satu dataset sehingga generalisasi lintas dataset belum dapat dipastikan. Analisis metrik operasional lanjutan seperti memori, throughput, dan energi juga belum dibahas secara detail.
 
 ## 5. KESIMPULAN DAN SARAN
 
