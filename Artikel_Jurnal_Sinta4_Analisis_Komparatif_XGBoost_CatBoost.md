@@ -55,15 +55,15 @@ Tabel 1 memastikan seluruh komponen eksperimen terdokumentasi, sehingga hasil da
 
 ```mermaid
 flowchart TD
-    A[Inisialisasi Penelitian] --> B[Pemanggilan Dataset NF-UNSW-NB15-v3]
-    B --> C[Audit Data Awal: nilai hilang, duplikat, ketidakseimbangan]
-    C --> D[Split Data Stratified 80:20]
-    D --> E[Label Encoding Target]
-    E --> F[Preprocessing Seragam]
-    F --> G[Pelatihan Baseline XGBoost & CatBoost]
-    G --> H[Evaluasi Hold-out + 5-Fold CV]
-    H --> I[Analisis Per Kelas & Ranking F1→Recall]
-    I --> J[Kesimpulan Komparasi Model]
+    A[Inisialisasi] --> B[Panggil Data<br/>NF-UNSW-NB15-v3]
+    B --> C[Audit Awal<br/>Missing-Duplikat-Imbalance]
+    C --> D[Split Stratified<br/>80:20]
+    D --> E[Label Encoding]
+    E --> F[Preprocessing<br/>Seragam]
+    F --> G[Train Baseline<br/>XGBoost & CatBoost]
+    G --> H[Evaluasi<br/>Hold-out + 5-Fold CV]
+    H --> I[Analisis Kelas<br/>& Ranking F1→Recall]
+    I --> J[Kesimpulan Model]
 ```
 
 Gambar 1 merangkum alur penelitian secara menyeluruh, sehingga urutan tahapan dari data mentah sampai keputusan model dapat dibaca secara cepat.
@@ -205,17 +205,15 @@ Tabel 8 memperlihatkan bobot jauh lebih tinggi pada kelas minoritas untuk mengur
 
 ```mermaid
 flowchart TD
-    A[Data setelah deduplikasi] --> B[Stratified Split 80:20]
-    B --> C[Label Encoding Target]
-    C --> D[Preprocessing Numerik]
-    C --> E[Preprocessing Kategorikal]
+    A[Data Setelah<br/>Deduplikasi] --> B[Stratified Split<br/>80:20]
+    B --> C[Label Encoding]
+    C --> D[Preprocessing<br/>Numerik]
+    C --> E[Preprocessing<br/>Kategorikal]
     D --> F[Gabung Fitur]
     E --> F
-    F --> G[Hitung class weight dan sample weight]
-    G --> H[Train XGBoost]
-    G --> I[Train CatBoost]
+    F --> G[Class Weight<br/>& Sample Weight]
+    G --> H[Train Baseline<br/>XGBoost + CatBoost]
     H --> J[Evaluasi]
-    I --> J
 ```
 
 Gambar 3 memperjelas bahwa kedua model menerima perlakuan data yang sama dari tahap split hingga evaluasi.
