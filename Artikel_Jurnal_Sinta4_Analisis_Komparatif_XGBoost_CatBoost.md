@@ -28,6 +28,7 @@ Penelitian ini berkontribusi pada: (1) pelaporan lengkap hasil komparasi baselin
 ## 2. METODE PENELITIAN
 
 Metode penelitian disederhanakan menjadi alur tunggal agar mudah dipahami: penyiapan lingkungan, audit data, split dan preprocessing seragam, pelatihan dua model baseline, lalu evaluasi kualitas dan efisiensi.
+Diagram berikut merangkum tahapan metode dari awal eksperimen hingga keputusan model akhir.
 
 **Gambar 1. Alur ringkas penelitian komparatif XGBoost dan CatBoost.**
 
@@ -57,11 +58,14 @@ Gambar 1 memperlihatkan urutan proses inti secara menyeluruh, sedangkan detail p
 | Imbalance ratio (Benign/Worms) | 14.162,85x |
 
 Tabel 1 menegaskan konteks eksperimen: skala data besar dan ketidakseimbangan kelas ekstrem.
-Rasio 14.162,85x membuat model berisiko bias ke kelas mayoritas, sehingga dipakai *stratified split*, pembobotan kelas, dan metrik yang sensitif terhadap kelas minoritas.
+Rasio 14.162,85x membuat model berisiko bias ke kelas mayoritas.
+Untuk mengurangi risiko tersebut, penelitian menerapkan *stratified split*, pembobotan kelas, dan metrik yang sensitif terhadap kelas minoritas.
 
 ### 2.2 Split, Preprocessing, dan Model
 
-Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, lalu dilanjutkan dengan *stratified split* 80:20. Setelah pembagian data, target pada train dan test diolah dengan *label encoding*. Tahap berikutnya adalah preprocessing fitur yang sama untuk kedua model, yaitu penanganan `inf/-inf`, imputasi median numerik, dan imputasi `MISSING/UNKNOWN` kategorikal. Proses ditutup dengan pembobotan kelas menggunakan `sample_weight`.
+Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, lalu dilanjutkan dengan *stratified split* 80:20. Setelah pembagian data, target pada train dan test diolah dengan *label encoding*.
+
+Tahap berikutnya adalah preprocessing fitur yang sama untuk kedua model, yaitu penanganan `inf/-inf`, imputasi median numerik, dan imputasi `MISSING/UNKNOWN` kategorikal. Proses ditutup dengan pembobotan kelas menggunakan `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -93,7 +97,7 @@ Evaluasi disusun dalam dua kelompok metrik, yaitu kualitas deteksi (Accuracy, Ba
 
 Tabel 3 menunjukkan pola yang jelas: XGBoost unggul pada kualitas deteksi, sedangkan CatBoost unggul pada efisiensi komputasi.
 
-**Gambar 2. Visual kompak perbandingan kualitas dan efisiensi antar model.**  
+**Gambar 2. Bar chart/heatmap kompak perbandingan kualitas dan efisiensi antar model.**  
 Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced Accuracy, MCC) dan metrik operasional (waktu training, latensi inferensi).
 
 ### 3.2 Ringkasan Per Kelas dan Kompromi Kinerja
@@ -111,7 +115,7 @@ Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced A
 Tabel 4 menegaskan bahwa CatBoost menunjukkan *recall* lebih tinggi pada kelas Analysis, tetapi XGBoost lebih konsisten menjaga keseimbangan precision-recall (F1) lintas kelas.
 
 **Gambar 3. Ringkasan pola confusion matrix per model.**  
-Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabil pada mayoritas kelas serangan, sementara CatBoost menunjukkan kompromi precision pada beberapa kelas minoritas.
+Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabil pada mayoritas kelas serangan, sementara CatBoost menunjukkan kompromi precision pada beberapa kelas minoritas seperti Analysis, Worms, dan Backdoor sebagaimana tercermin pada Tabel 4.
 
 ### 3.3 Implikasi Implementasi
 
