@@ -51,12 +51,12 @@ Eksperimen dijalankan pada Kaggle Notebook (Linux 6.6.113+, Python 3.12.12) deng
 
 Tabel 1 memastikan seluruh komponen eksperimen terdokumentasi, sehingga hasil dapat diulang pada konfigurasi perangkat lunak yang setara.
 
-**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada IDS multikelas.**
+**Gambar 1. Alur penelitian komparatif XGBoost dan CatBoost pada Sistem Deteksi Intrusi (IDS) multikelas.**
 
 ```mermaid
 flowchart TD
     A[Mulai] --> B[Pemanggilan Dataset NF-UNSW-NB15-v3]
-    B --> C[Audit Data Awal: missing, duplikat, imbalance]
+    B --> C[Audit Data Awal: nilai hilang, duplikat, ketidakseimbangan]
     C --> D[Split Data Stratified 80:20]
     D --> E[Label Encoding Target]
     E --> F[Preprocessing Seragam]
@@ -205,14 +205,14 @@ Tabel 8 memperlihatkan bobot jauh lebih tinggi pada kelas minoritas untuk mengur
 **Gambar 3. Diagram pipeline preprocessing dan pelatihan model.**
 
 ```mermaid
-flowchart LR
+flowchart TD
     A[Data setelah deduplikasi] --> B[Stratified Split 80:20]
     B --> C[Label Encoding Target]
     C --> D[Preprocessing Numerik]
     C --> E[Preprocessing Kategorikal]
     D --> F[Gabung Fitur]
     E --> F
-    F --> G[Hitung class weight & sample weight]
+    F --> G[Hitung class weight dan sample weight]
     G --> H[Train XGBoost]
     G --> I[Train CatBoost]
     H --> J[Evaluasi]
