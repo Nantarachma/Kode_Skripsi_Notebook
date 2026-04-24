@@ -7,7 +7,7 @@ Email: penulis@domain.ac.id
 
 ## ABSTRAK
 
-Penelitian ini membandingkan XGBoost dan CatBoost untuk *multiclass intrusion detection* pada dataset NF-UNSW-NB15-v3 yang sangat tidak seimbang. Eksperimen dibuat reproduktif di Kaggle Notebook (Python 3.12.12, seed 42) dengan pipeline identik untuk kedua model: deduplikasi data, *stratified split* 80:20, imputasi numerik dan kategorikal, serta *balanced class weighting*. Evaluasi meliputi metrik kualitas klasifikasi, efisiensi komputasi, validasi 5-fold *Stratified CV*, dan analisis per kelas. Berdasarkan aturan pemilihan F1→Recall dari output notebook, XGBoost menjadi model terbaik (F1 0,9903; Recall 0,9901; Accuracy 0,9901; MCC 0,9061; CV F1 0,9901±0,0001). CatBoost memiliki kualitas prediksi sedikit lebih rendah (F1 0,9865), tetapi lebih cepat untuk pelatihan dan inferensi (34,386 s vs 54,995 s; 0,0017 ms/sampel vs 0,0042 ms/sampel). Temuan ini menunjukkan XGBoost lebih cocok saat prioritas adalah kualitas deteksi, sedangkan CatBoost relevan untuk skenario latensi rendah.
+Penelitian ini membandingkan XGBoost dan CatBoost untuk *multiclass intrusion detection* pada dataset NF-UNSW-NB15-v3 yang sangat tidak seimbang. Eksperimen dibuat reproduksibel di Kaggle Notebook (Python 3.12.12, seed 42) dengan pipeline identik untuk kedua model: deduplikasi data, *stratified split* 80:20, imputasi numerik dan kategorikal, serta *balanced class weighting*. Evaluasi meliputi metrik kualitas klasifikasi, efisiensi komputasi, validasi 5-fold *Stratified CV*, dan analisis per kelas. Berdasarkan aturan pemilihan F1→Recall dari output notebook, XGBoost menjadi model terbaik (F1 0,9903; Recall 0,9901; Accuracy 0,9901; MCC 0,9061; CV F1 0,9901±0,0001). CatBoost memiliki kualitas prediksi sedikit lebih rendah (F1 0,9865), tetapi lebih cepat untuk pelatihan dan inferensi (34,386 s vs 54,995 s; 0,0017 ms/sampel vs 0,0042 ms/sampel). Temuan ini menunjukkan XGBoost lebih cocok saat prioritas adalah kualitas deteksi, sedangkan CatBoost relevan untuk skenario latensi rendah.
 
 **Kata kunci**: deteksi intrusi, XGBoost, CatBoost, NF-UNSW-NB15-v3, klasifikasi multikelas
 
@@ -29,7 +29,7 @@ Penelitian ini menerapkan analisis berbasis output notebook komparatif untuk men
 
 **Tabel 1. Ringkasan setup eksperimen dan data**
 
-| Komponen | Nilai |
+| Komponen | Spesifikasi |
 |---|---|
 | Environment | Kaggle Notebook (Python 3.12.12, seed 42) |
 | Device | GPU aktif untuk XGBoost dan CatBoost (fallback CPU otomatis) |
