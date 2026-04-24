@@ -41,13 +41,13 @@ flowchart TD
     F --> G[Analisis per kelas dan keputusan model]
 ```
 
-Gambar 1 memperlihatkan urutan proses inti secara menyeluruh agar alur eksperimen mudah direplikasi.
+Gambar 1 memperlihatkan urutan proses inti secara menyeluruh, sedangkan detail parameter dan metrik pendukung replikasi dirangkum pada tabel metode dan hasil.
 
 ### 2.1 Ringkasan Setup dan Data
 
 **Tabel 1. Ringkasan setup eksperimen dan karakter data**
 
-| Komponen | Nilai Ringkas |
+| Komponen | Deskripsi |
 |---|---|
 | Environment | Kaggle Notebook (Python 3.12.12, seed 42) |
 | Device | GPU aktif untuk XGBoost dan CatBoost (fallback CPU otomatis) |
@@ -57,15 +57,16 @@ Gambar 1 memperlihatkan urutan proses inti secara menyeluruh agar alur eksperime
 | Imbalance ratio (Benign/Worms) | 14.162,85x |
 
 Tabel 1 menegaskan konteks eksperimen: skala data besar dan ketidakseimbangan kelas ekstrem.
+Rasio 14.162,85x membuat model berisiko bias ke kelas mayoritas, sehingga dipakai *stratified split*, pembobotan kelas, dan metrik yang sensitif terhadap kelas minoritas.
 
 ### 2.2 Split, Preprocessing, dan Model
 
 Tahap data dibuat ringkas dan konsisten untuk kedua model:
-- Deduplikasi data.
-- *Stratified split* 80:20.
-- *Label encoding* target pada train dan test.
-- Preprocessing fitur yang sama: penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal.
-- Pembobotan kelas melalui `sample_weight`.
+1. Deduplikasi data.
+2. *Stratified split* 80:20.
+3. *Label encoding* target pada train dan test.
+4. Preprocessing fitur yang sama: penanganan `inf/-inf`, imputasi median numerik, serta imputasi `MISSING/UNKNOWN` kategorikal.
+5. Pembobotan kelas melalui `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -104,7 +105,7 @@ Tabel 3 menunjukkan pola yang jelas: XGBoost unggul pada kualitas deteksi, sedan
 **Gambar 2. Visual kompak perbandingan kualitas dan efisiensi antar model.**  
 Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced Accuracy, MCC) dan metrik operasional (waktu training, latensi inferensi).
 
-### 3.2 Ringkasan Per Kelas dan Trade-off
+### 3.2 Ringkasan Per Kelas dan Kompromi Kinerja
 
 **Tabel 4. Ringkasan performa per kelas (indikator utama)**
 
@@ -116,7 +117,7 @@ Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced A
 | F1 kelas Worms | 0,7188 | 0,3218 | XGBoost jauh lebih konsisten |
 | F1 kelas Backdoor | 0,9378 | 0,7588 | XGBoost unggul signifikan |
 
-Tabel 4 menegaskan bahwa CatBoost kadang memberi *recall* tinggi pada kelas langka, tetapi XGBoost lebih konsisten menjaga keseimbangan precision-recall (F1) lintas kelas.
+Tabel 4 menegaskan bahwa CatBoost menunjukkan *recall* lebih tinggi pada kelas Analysis, tetapi XGBoost lebih konsisten menjaga keseimbangan precision-recall (F1) lintas kelas.
 
 **Gambar 3. Ringkasan pola confusion matrix per model.**  
 Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabil pada mayoritas kelas serangan, sementara CatBoost menunjukkan kompromi precision pada beberapa kelas minoritas.
@@ -131,7 +132,7 @@ Pendekatan ini lebih tepat daripada memakai accuracy tunggal karena mempertimban
 
 ## 4. KETERBATASAN PENELITIAN
 
-Keterbatasan studi ini disederhanakan pada tiga poin utama:
+Keterbatasan studi ini dirangkum dalam tiga poin utama:
 1. Konfigurasi masih baseline, belum tuning hiperparameter menyeluruh.
 2. Evaluasi hanya pada satu dataset, sehingga generalisasi lintas dataset belum dipastikan.
 3. Metrik operasional lanjutan (memori, throughput, energi) belum dianalisis detail.
