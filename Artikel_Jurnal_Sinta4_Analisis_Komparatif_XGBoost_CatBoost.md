@@ -57,12 +57,13 @@ Tabel 1 memastikan seluruh komponen eksperimen terdokumentasi, sehingga hasil da
 flowchart TD
     A[Mulai] --> B[Pemanggilan Dataset NF-UNSW-NB15-v3]
     B --> C[Audit Data Awal: missing, duplikat, imbalance]
-    C --> D[Preprocessing Seragam]
-    D --> E[Split Data Stratified 80:20]
-    E --> F[Pelatihan Baseline XGBoost & CatBoost]
-    F --> G[Evaluasi Hold-out + 5-Fold CV]
-    G --> H[Analisis Per Kelas & Ranking F1→Recall]
-    H --> I[Kesimpulan dan Rekomendasi Implementasi]
+    C --> D[Split Data Stratified 80:20]
+    D --> E[Label Encoding Target]
+    E --> F[Preprocessing Seragam]
+    F --> G[Pelatihan Baseline XGBoost & CatBoost]
+    G --> H[Evaluasi Hold-out + 5-Fold CV]
+    H --> I[Analisis Per Kelas & Ranking F1→Recall]
+    I --> J[Kesimpulan dan Rekomendasi Implementasi]
 ```
 
 Gambar 1 merangkum alur ujung-ke-ujung penelitian, sehingga urutan tahapan dari data mentah sampai keputusan model dapat dibaca secara cepat.
@@ -164,12 +165,13 @@ Tabel 5 menunjukkan data latih dan data uji cukup besar untuk pelatihan model da
 
 Tabel 6 mengonfirmasi bahwa proporsi kelas di train dan test tetap konsisten karena penggunaan *stratified split*.
 
-Pipeline preprocessing dibuat identik pada kedua model dengan tahapan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
+Tahapan persiapan data dibuat identik pada kedua model dengan urutan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
 1. Pemisahan fitur numerik dan kategorikal
-2. Konversi `inf/-inf` menjadi `NaN`
-3. Imputasi median untuk fitur numerik
-4. Imputasi `MISSING` dan pemetaan `UNKNOWN` untuk fitur kategorikal
-5. Pembobotan kelas seimbang ke dalam `sample_weight`
+2. Label encoding pada target multikelas
+3. Konversi `inf/-inf` menjadi `NaN`
+4. Imputasi median untuk fitur numerik
+5. Imputasi `MISSING` dan pemetaan `UNKNOWN` untuk fitur kategorikal
+6. Pembobotan kelas seimbang ke dalam `sample_weight`
 
 **Tabel 7. Ringkasan preprocessing**
 
