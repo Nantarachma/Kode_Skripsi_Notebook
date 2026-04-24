@@ -65,7 +65,7 @@ Untuk mengurangi risiko tersebut, penelitian menerapkan *stratified split*, pemb
 
 Tahap data dibuat ringkas dan konsisten untuk kedua model. Proses dimulai dari deduplikasi data, lalu dilanjutkan dengan *stratified split* 80:20. Setelah pembagian data, target pada train dan test diolah dengan *label encoding*.
 
-Tahap berikutnya adalah preprocessing fitur yang sama untuk kedua model, yaitu konversi `inf/-inf` menjadi `NaN`, imputasi median numerik, dan imputasi `MISSING/UNKNOWN` kategorikal. Proses ditutup dengan pembobotan kelas menggunakan `sample_weight`.
+Tahap berikutnya adalah preprocessing fitur yang sama untuk kedua model, yaitu konversi `inf/-inf` menjadi `NaN`, imputasi median numerik, dan imputasi `MISSING/UNKNOWN` kategorikal. Setelah itu, proses ditutup dengan pembobotan kelas menggunakan `sample_weight`.
 
 **Tabel 2. Ringkasan pipeline data dan konfigurasi baseline**
 
@@ -97,8 +97,8 @@ Evaluasi disusun dalam dua kelompok metrik, yaitu kualitas deteksi (Accuracy, Ba
 
 Tabel 3 menunjukkan pola yang jelas: XGBoost unggul pada kualitas deteksi, sedangkan CatBoost unggul pada efisiensi komputasi.
 
-**Gambar 2. Bar chart kompak perbandingan kualitas dan efisiensi antar model.**  
-Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced Accuracy, MCC) dan metrik operasional (waktu training, latensi inferensi).
+**Gambar 2. Bar chart kompak metrik utama model (F1, Recall, Balanced Accuracy, MCC) beserta efisiensi training dan latensi inferensi.**  
+Visual ini merangkum dua sisi keputusan dalam satu tampilan, yaitu kualitas deteksi dan efisiensi komputasi antar model.
 
 ### 3.2 Ringkasan Per Kelas dan Kompromi Kinerja
 
@@ -114,12 +114,12 @@ Visual ini merangkum dua sisi keputusan: metrik kualitas (F1, Recall, Balanced A
 
 Tabel 4 menegaskan bahwa CatBoost menunjukkan *recall* lebih tinggi pada kelas Analysis, tetapi XGBoost lebih konsisten menjaga keseimbangan *precision-recall* (F1) lintas kelas.
 
-**Gambar 3. Ringkasan pola confusion matrix per model.**  
-Visual ini menyoroti bahwa XGBoost mempertahankan pola prediksi yang lebih stabil pada mayoritas kelas serangan, sementara CatBoost menunjukkan kompromi precision pada beberapa kelas minoritas seperti Analysis, Worms, dan Backdoor sebagaimana tercermin pada Tabel 4.
+**Gambar 3. Ringkasan confusion matrix mentah dan ternormalisasi per model.**  
+Visual ini menampilkan pola salah-klasifikasi dalam jumlah absolut dan proporsi per kelas, sehingga perbedaan stabilitas prediksi XGBoost dan kompromi precision CatBoost pada kelas minoritas (Analysis, Worms, Backdoor) dapat dibaca lebih jelas.
 
 ### 3.3 Implikasi Implementasi
 
-Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem. Untuk kualitas deteksi yang lebih kuat, model yang disarankan adalah **XGBoost**. Untuk kebutuhan latensi rendah, **CatBoost** tetap relevan sebagai alternatif. Pendekatan ini lebih tepat daripada memakai accuracy tunggal karena mempertimbangkan ketidakseimbangan kelas dan kebutuhan operasional sekaligus.
+Secara praktis, pemilihan model mengikuti prioritas kebutuhan sistem. Untuk kualitas deteksi yang lebih kuat, model yang disarankan adalah **XGBoost**. Untuk kebutuhan latensi rendah, **CatBoost** tetap relevan sebagai alternatif karena lebih cepat sekitar 37,47% saat training dan sekitar 59,52% pada latensi inferensi. Pendekatan ini lebih tepat daripada memakai accuracy tunggal karena mempertimbangkan ketidakseimbangan kelas dan kebutuhan operasional sekaligus.
 
 ## 4. KETERBATASAN PENELITIAN
 
