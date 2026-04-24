@@ -122,6 +122,7 @@ pie showData
 ```
 
 Gambar 2 menekankan bahwa mayoritas sampel berada di kelas *Benign*, sehingga strategi penanganan *imbalance* menjadi bagian inti metode.
+Kategori "8 kelas lainnya (gabungan)" pada visual ini terdiri dari **Fuzzers, Generic, Reconnaissance, DoS, Backdoor, Shellcode, Analysis,** dan **Worms**, sedangkan rincian lengkap tiap kelas tetap disajikan pada Tabel 4.
 
 ### 2.3 Split Data, Preprocessing, dan Penanganan Imbalance
 
@@ -157,7 +158,12 @@ Tabel 5 menunjukkan data latih dan data uji cukup besar untuk pelatihan model da
 
 Tabel 6 mengonfirmasi bahwa proporsi kelas di train dan test tetap konsisten karena penggunaan *stratified split*.
 
-Pipeline preprocessing dibuat identik pada kedua model: pemisahan fitur numerik-kategorikal, konversi `inf/-inf` ke `NaN`, imputasi median (numerik), imputasi `MISSING` dan pemetaan `UNKNOWN` (kategorikal), serta pembobotan kelas seimbang dalam `sample_weight` (He & Garcia, 2009; Pedregosa et al., 2011).
+Pipeline preprocessing dibuat identik pada kedua model dengan tahapan berikut (He & Garcia, 2009; Pedregosa et al., 2011):
+1. pemisahan fitur numerik dan kategorikal,
+2. konversi `inf/-inf` menjadi `NaN`,
+3. imputasi median untuk fitur numerik,
+4. imputasi `MISSING` dan pemetaan `UNKNOWN` untuk fitur kategorikal, serta
+5. pembobotan kelas seimbang ke dalam `sample_weight`.
 
 **Tabel 7. Ringkasan preprocessing**
 
